@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #F59E0B;
+  --color-secondary: #10B981;
+  --color-dark: #1F2937;
+  --color-light: #F3F4F6;
+}
+
+/* Đảm bảo body chiếm full màn hình */
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-light);
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,17 @@
+# --- Backend Gitignore ---
+
+# Chặn thư viện nặng
+node_modules/
+
+# Chặn file môi trường (Quan trọng: Chứa mật khẩu DB)
+.env
+.env.*
+
+# Logs lỗi
+npm-debug.log*
+yarn-debug.log*
+logs/
+*.log
+
+# File hệ thống
+.DS_Store

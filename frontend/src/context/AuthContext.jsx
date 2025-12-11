@@ -1,0 +1,94 @@
+import { createContext, useState, useEffect } from 'react';
+import api from '../services/api';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+
+export const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // Mặc định là đang tải
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkLoggedIn = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        try {
+          // Gọi API lấy thông tin user
+          const { data } = await api.get('/users/profile');
+          setUser(data);
+        } catch (error) {
+          console.error("Lỗi xác thực:", error);
+          // Nếu token lỗi thì xóa đi để tránh kẹt
+          localStorage.removeItem('token');
+          setUser(null);
+        }
+      }
+      
+      // QUAN TRỌNG: Dù thành công hay thất bại, cũng phải tắt Loading
+      setLoading(false);
+    };
+
+    checkLoggedIn();
+  }, []);
+
+  const login = async (email, password) => {
+    try {
+      const { data } = await api.post('/users/login', { email, password });
+      localStorage.setItem('token', data.token);
+      setUser(data);
+      toast.success(`Chào mừng ${data.fullName}!`);
+      
+      // --- LOGIC CHUYỂN HƯỚNG MỚI ---
+      if (data.role === 'admin') {
+          navigate('/admin/dashboard'); // Admin vào thẳng Dashboard
+      } else if (data.role === 'seller') {
+          navigate('/seller/orders'); // Seller vào trang đơn hàng (hoặc dashboard)
+      } else {
+          navigate('/'); // Khách về trang chủ
+      }
+      // -------------------------------
+
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Đăng nhập thất bại');
+    }
+  };
+
+  const register = async (fullName, email, password) => {
+    try {
+      const { data } = await api.post('/users/register', { fullName, email, password });
+      localStorage.setItem('token', data.token);
+      setUser(data);
+      toast.success('Đăng ký thành công!');
+      navigate('/');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Đăng ký thất bại');
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    toast.info('Đã đăng xuất');
+    navigate('/login');
+  };
+
+  // Màn hình chờ khi đang check login (Thay vì màn hình trắng)
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-xl font-semibold text-yellow-600 animate-pulse">
+          Đang tải dữ liệu Fluffy...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
