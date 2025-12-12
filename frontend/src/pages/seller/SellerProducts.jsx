@@ -14,12 +14,14 @@ const SellerProducts = () => {
   const [productType, setProductType] = useState('pet'); 
   
   // --- STATE DROPDOWN 2 CẤP ---
-  const [parentGroup, setParentGroup] = useState(''); // ID Nhóm (Chó/Mèo/PK Chó/PK Mèo...)
-  const [filteredSubCats, setFilteredSubCats] = useState([]); // Danh sách con
+  const [parentGroup, setParentGroup] = useState(''); 
+  const [filteredSubCats, setFilteredSubCats] = useState([]); 
 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', stock: 1, category: '',
-    age: '', gender: 'Đực', breed: '', images: [] 
+    age: '', gender: 'Đực', breed: '', 
+    weight: '', length: '', // --- MỚI ---
+    images: [] 
   });
 
   const [previewImages, setPreviewImages] = useState([]);
@@ -99,7 +101,8 @@ const SellerProducts = () => {
 
       if (isEditMode) {
         await api.put(`/pets/${editingId}`, {
-            name: formData.name, description: formData.description, price: formData.price, stock: formData.stock, status: 'available'
+            name: formData.name, description: formData.description, price: formData.price, stock: formData.stock, status: 'available',
+            age: formData.age, gender: formData.gender, weight: formData.weight, length: formData.length // --- MỚI Update ---
         });
         toast.success('Cập nhật thành công!');
       } else {
@@ -114,6 +117,8 @@ const SellerProducts = () => {
             data.append('age', formData.age);
             data.append('gender', formData.gender);
             data.append('breed', breedName);
+            data.append('weight', formData.weight); // --- MỚI ---
+            data.append('length', formData.length); // --- MỚI ---
             if (certFile) data.append('certification', certFile);
         }
         
@@ -144,7 +149,9 @@ const SellerProducts = () => {
       setProductType(pet.breed || pet.age ? 'pet' : 'accessory');
       setFormData({
           name: pet.name, description: pet.description, price: pet.price, stock: pet.stock, category: pet.category._id,
-          age: pet.age || '', gender: pet.gender || 'Đực', breed: pet.breed || '', images: []
+          age: pet.age || '', gender: pet.gender || 'Đực', breed: pet.breed || '', 
+          weight: pet.weight || '', length: pet.length || '', // --- MỚI ---
+          images: []
       });
       setPreviewImages(pet.images || []);
       setCertFile(null); setCertPreview(null);
@@ -154,7 +161,8 @@ const SellerProducts = () => {
   const resetForm = () => {
       setFormData({
         name: '', description: '', price: '', stock: 1, category: '',
-        age: '', gender: 'Đực', breed: '', images: []
+        age: '', gender: 'Đực', breed: '', weight: '', length: '', // --- MỚI ---
+        images: []
       });
       setPreviewImages([]);
       setCertFile(null); setCertPreview(null);
@@ -242,7 +250,6 @@ const SellerProducts = () => {
                         {/* --- DROPDOWN 2 CẤP --- */}
                         <div>
                             <div className="space-y-2">
-                                {/* CẤP 1: Nhóm (Chó/Mèo HOẶC PK Chó/PK Mèo) */}
                                 <select 
                                     value={parentGroup} 
                                     onChange={(e) => setParentGroup(e.target.value)} 
@@ -254,7 +261,6 @@ const SellerProducts = () => {
                                     ))}
                                 </select>
 
-                                {/* CẤP 2: Chi tiết (Giống hoặc Loại PK) */}
                                 <select 
                                     name="category" 
                                     required 
@@ -297,6 +303,15 @@ const SellerProducts = () => {
                                         <option value="Cái">Cái</option>
                                         <option value="Không xác định">Không xác định</option>
                                     </select>
+                                </div>
+                                {/* --- MỚI: Thêm 2 trường Cân nặng và Chiều dài --- */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cân nặng</label>
+                                    <input type="text" name="weight" value={formData.weight} onChange={handleInputChange} className="w-full border rounded-lg px-3 py-2 outline-none" placeholder="VD: 3.5 kg"/>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Chiều dài</label>
+                                    <input type="text" name="length" value={formData.length} onChange={handleInputChange} className="w-full border rounded-lg px-3 py-2 outline-none" placeholder="VD: 30 cm"/>
                                 </div>
                             </div>
 

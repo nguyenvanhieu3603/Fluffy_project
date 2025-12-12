@@ -55,6 +55,11 @@ const petSchema = new mongoose.Schema({
   },
   breed: { type: String },
   
+  
+  weight: { type: String }, 
+  length: { type: String }, 
+  
+
   location: locationSchema,
   healthInfo: healthInfoSchema,
   

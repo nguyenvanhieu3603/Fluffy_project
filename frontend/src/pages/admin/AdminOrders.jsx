@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../../services/api';
-import { FaBoxOpen, FaEye, FaSearch, FaUser, FaStore } from 'react-icons/fa';
+import { FaBoxOpen, FaEye, FaSearch, FaUser, FaStore, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 
@@ -9,6 +9,10 @@ const AdminOrders = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // --- Pagination State ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Số đơn hàng mỗi trang
 
   // Các tabs lọc trạng thái
   const tabs = [
@@ -35,6 +39,11 @@ const AdminOrders = () => {
     fetchOrders();
   }, []);
 
+  // Reset về trang 1 khi filter thay đổi để tránh lỗi đang ở trang 2 mà filter chỉ có 1 trang
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm]);
+
   const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
   const getStatusBadge = (status) => {
@@ -58,6 +67,18 @@ const AdminOrders = () => {
       return matchTab && matchSearch;
   });
 
+  // --- Logic Tính toán Phân trang ---
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredOrders.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+      setCurrentPage(pageNumber);
+      // Cuộn lên đầu bảng khi chuyển trang
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -76,6 +97,9 @@ const AdminOrders = () => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                   />
                   <FaSearch className="absolute left-3 top-3 text-gray-400"/>
+              </div>
+              <div className="text-sm text-gray-500 self-center">
+                  Hiển thị <b>{currentItems.length}</b> / <b>{filteredOrders.length}</b> đơn hàng
               </div>
           </div>
 
@@ -97,8 +121,8 @@ const AdminOrders = () => {
       </div>
 
       {loading ? <div>Đang tải dữ liệu...</div> : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[500px]">
+            <div className="overflow-x-auto flex-grow">
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-gray-50 text-gray-600 text-sm uppercase">
@@ -112,10 +136,10 @@ const AdminOrders = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-sm">
-                        {filteredOrders.length === 0 ? (
+                        {currentItems.length === 0 ? (
                             <tr><td colSpan="7" className="p-8 text-center text-gray-500">Không tìm thấy đơn hàng nào.</td></tr>
                         ) : (
-                            filteredOrders.map(order => (
+                            currentItems.map(order => (
                                 <tr key={order._id} className="hover:bg-gray-50">
                                     <td className="p-4 font-bold text-gray-700 font-mono">#{order._id.slice(-6).toUpperCase()}</td>
                                     <td className="p-4">
@@ -144,6 +168,54 @@ const AdminOrders = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* --- Pagination Controls --- */}
+            {totalPages > 1 && (
+                <div className="p-4 border-t border-gray-100 flex justify-center items-center gap-2 bg-gray-50 mt-auto">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`p-2 rounded-lg transition-colors ${
+                            currentPage === 1 
+                            ? 'text-gray-300 cursor-not-allowed' 
+                            : 'text-gray-600 hover:bg-white hover:shadow-sm hover:text-[var(--color-primary)]'
+                        }`}
+                    >
+                        <FaChevronLeft />
+                    </button>
+                    
+                    {/* Page Numbers */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                        // Logic rút gọn số trang nếu quá nhiều (tùy chọn đơn giản: hiện tất cả nếu < 10 trang)
+                        // Ở đây mình hiển thị tất cả để đơn giản
+                        return (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                                    currentPage === page
+                                    ? 'bg-[var(--color-primary)] text-white shadow-md transform scale-105'
+                                    : 'text-gray-600 hover:bg-white hover:shadow-sm hover:text-[var(--color-primary)]'
+                                }`}
+                            >
+                                {page}
+                            </button>
+                        );
+                    })}
+
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className={`p-2 rounded-lg transition-colors ${
+                            currentPage === totalPages 
+                            ? 'text-gray-300 cursor-not-allowed' 
+                            : 'text-gray-600 hover:bg-white hover:shadow-sm hover:text-[var(--color-primary)]'
+                        }`}
+                    >
+                        <FaChevronRight />
+                    </button>
+                </div>
+            )}
         </div>
       )}
     </div>

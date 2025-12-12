@@ -2,8 +2,7 @@ const Pet = require('../models/petModel');
 const Category = require('../models/categoryModel'); 
 const User = require('../models/userModel');
 
-// ... (Các hàm getPets, createPet... GIỮ NGUYÊN)
-
+// ... (Giữ nguyên các hàm getPets, getPetById)
 // @desc    Lấy danh sách thú cưng (Lọc, Tìm kiếm, Phân trang, Sắp xếp)
 // @route   GET /api/pets
 // @access  Public
@@ -102,7 +101,6 @@ const getPets = async (req, res) => {
   }
 };
 
-// --- SỬA HÀM NÀY ---
 // @desc    Lấy chi tiết 1 thú cưng
 // @route   GET /api/pets/:id
 // @access  Public
@@ -131,12 +129,12 @@ const getPetById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-// -------------------
 
-// ... (Các hàm createPet, updatePet, deletePet... GIỮ NGUYÊN như cũ)
+// @desc    Tạo thú cưng mới (Seller)
 const createPet = async (req, res) => {
   try {
-    const { name, description, price, category, stock, age, gender, breed } = req.body;
+    // --- MỚI: Thêm weight, length vào destructuring ---
+    const { name, description, price, category, stock, age, gender, breed, weight, length } = req.body;
 
     const imageFiles = req.files && req.files['images'] ? req.files['images'] : [];
     
@@ -168,6 +166,7 @@ const createPet = async (req, res) => {
       seller: req.user._id,
       images: imageUrls,
       age, gender, breed,
+      weight, length, // --- MỚI: Lưu vào DB ---
       location: { city, district },
       healthInfo: {
           vaccinationCertificate: certPath
@@ -184,9 +183,11 @@ const createPet = async (req, res) => {
   }
 };
 
+// @desc    Cập nhật thú cưng (Seller)
 const updatePet = async (req, res) => {
   try {
-    const { name, description, price, stock, status } = req.body;
+    // --- MỚI: Thêm weight, length ---
+    const { name, description, price, stock, status, age, gender, weight, length } = req.body;
     const pet = await Pet.findById(req.params.id);
 
     if (pet) {
@@ -198,6 +199,12 @@ const updatePet = async (req, res) => {
       pet.price = price || pet.price;
       pet.stock = stock || pet.stock;
       pet.status = status || pet.status;
+      
+      // Update thông tin chi tiết
+      if (age) pet.age = age;
+      if (gender) pet.gender = gender;
+      if (weight) pet.weight = weight; // --- MỚI ---
+      if (length) pet.length = length; // --- MỚI ---
 
       const updatedPet = await pet.save();
       res.json(updatedPet);
@@ -209,6 +216,7 @@ const updatePet = async (req, res) => {
   }
 };
 
+// ... (Giữ nguyên deletePet, approveHealthCheck, getMyPets, getPendingPets)
 const deletePet = async (req, res) => {
   try {
     const pet = await Pet.findById(req.params.id);

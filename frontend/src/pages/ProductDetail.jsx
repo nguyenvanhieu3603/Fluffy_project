@@ -1,11 +1,11 @@
 import { useEffect, useState, useContext } from 'react'; 
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
-import { FaMapMarkerAlt, FaHeart, FaShoppingCart, FaShieldAlt, FaCheckCircle, FaStore } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaHeart, FaShoppingCart, FaShieldAlt, FaCheckCircle, FaStore, FaRuler, FaWeightHanging } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { CartContext } from '../context/CartContext'; 
 import { AuthContext } from '../context/AuthContext';
-import ReviewSection from '../components/ReviewSection'; // Module đánh giá
+import ReviewSection from '../components/ReviewSection'; 
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -46,20 +46,14 @@ const ProductDetail = () => {
       addToCart(pet, 1);
   };
 
-  // Logic kiểm tra loại sản phẩm
   const isPet = pet.breed || pet.age || (pet.gender && pet.gender !== 'Không xác định');
-
-  // Logic hiển thị danh mục (Ưu tiên danh mục cha nếu có)
   const parentCategoryName = pet.category?.parentId?.name; 
   const currentCategoryName = pet.category?.name;
   const displayCategory = parentCategoryName || currentCategoryName || 'Khác';
-
-  // Logic kiểm tra chủ sở hữu (để chặn tự mua hàng)
   const isOwner = user && pet.seller && (user._id === pet.seller._id || user._id === pet.seller);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
       <div className="text-sm text-gray-500 mb-6">
         <Link to="/" className="hover:text-[var(--color-primary)]">Trang chủ</Link> / 
         <Link to={isPet ? "/pets" : "/accessories"} className="hover:text-[var(--color-primary)] ml-1">
@@ -69,7 +63,6 @@ const ProductDetail = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        {/* CỘT TRÁI: HÌNH ẢNH */}
         <div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4 relative group">
             <img 
@@ -78,23 +71,17 @@ const ProductDetail = () => {
               className="w-full h-96 object-contain bg-gray-50"
             />
             
-            {/* BADGE TRẠNG THÁI */}
             {pet.healthStatus === 'approved' && (
                <div className={`absolute top-4 left-4 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center shadow-lg ${isPet ? 'bg-green-500' : 'bg-blue-500'}`}>
                  {isPet ? (
-                    <>
-                        <FaShieldAlt className="mr-1" /> Đã kiểm tra sức khỏe
-                    </>
+                    <> <FaShieldAlt className="mr-1" /> Đã kiểm tra sức khỏe </>
                  ) : (
-                    <>
-                        <FaCheckCircle className="mr-1" /> Đã kiểm định an toàn
-                    </>
+                    <> <FaCheckCircle className="mr-1" /> Đã kiểm định an toàn </>
                  )}
                </div>
             )}
           </div>
           
-          {/* Thumbnails */}
           {pet.images && pet.images.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-2">
                 {pet.images.map((img, index) => (
@@ -110,7 +97,6 @@ const ProductDetail = () => {
           )}
         </div>
 
-        {/* CỘT PHẢI: THÔNG TIN */}
         <div>
           <h1 className="text-3xl font-extrabold text-gray-800 mb-2">{pet.name}</h1>
           <div className="flex items-center text-sm text-gray-500 mb-4">
@@ -122,7 +108,6 @@ const ProductDetail = () => {
             {formatPrice(pet.price)}
           </div>
 
-          {/* BẢNG THÔNG TIN CHI TIẾT */}
           <div className="bg-gray-50 rounded-xl p-6 mb-6">
             <h3 className="font-bold text-gray-800 mb-4">Thông tin chi tiết</h3>
             <div className="grid grid-cols-2 gap-y-3 text-sm">
@@ -140,6 +125,13 @@ const ProductDetail = () => {
                         
                         <div className="text-gray-500">Giới tính:</div>
                         <div className="font-medium text-gray-900">{pet.gender}</div>
+
+                      
+                        <div className="text-gray-500">Cân nặng:</div>
+                        <div className="font-medium text-gray-900 flex items-center gap-1">{pet.weight || 'Chưa cập nhật'}</div>
+
+                        <div className="text-gray-500">Chiều dài:</div>
+                        <div className="font-medium text-gray-900 flex items-center gap-1">{pet.length || 'Chưa cập nhật'}</div>
                     </>
                 )}
 
@@ -149,7 +141,7 @@ const ProductDetail = () => {
                 <div className="text-gray-500">{isPet ? 'Sức khỏe:' : 'Chất lượng:'}</div>
                 <div className="font-medium text-green-600 flex items-center">
                     <FaCheckCircle className="mr-1"/> 
-                    {isPet ? 'Tốt (Đã tiêm phòng)' : 'Đảm bảo an toàn cho thú cưng'}
+                    {isPet ? 'Tốt (Đã tiêm phòng)' : 'Đảm bảo an toàn'}
                 </div>
             </div>
           </div>
@@ -164,7 +156,6 @@ const ProductDetail = () => {
           </div>
 
           <div className="flex gap-4 mb-8">
-            {/* Nút Mua hàng thông minh */}
             <button 
                 onClick={handleAddToCart}
                 disabled={pet.stock === 0 || isOwner}
@@ -182,7 +173,6 @@ const ProductDetail = () => {
             </button>
           </div>
 
-          {/* Thông tin Seller */}
           <div className="border-t border-gray-100 pt-6">
             <h3 className="font-bold text-gray-800 mb-4">Thông tin người bán</h3>
             <div className="flex items-center gap-4">
@@ -208,7 +198,6 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      {/* --- PHẦN ĐÁNH GIÁ & NHẬN XÉT --- */}
       <ReviewSection productId={id} />
       
     </div>
