@@ -4,6 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
 
 // Pages
 import Home from './pages/Home';
@@ -25,6 +26,7 @@ import Blog from './pages/Blog';
 import BlogDetail from './pages/BlogDetail';
 import Contact from './pages/Contact';
 import ShopProfile from './pages/ShopProfile'; // <-- Import trang Shop mới
+import Help from './pages/Help';
 
 // Admin & Seller
 import SellerLayout from './layouts/SellerLayout'; 
@@ -47,6 +49,7 @@ import AdminBlogs from './pages/admin/AdminBlogs';
 const MainLayout = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
+      <ScrollToTop />
       <Header />
       <main className="flex-grow">
         <Outlet />
@@ -78,8 +81,8 @@ function App() {
             <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/order/:id" element={<OrderDetail />} />
             <Route path="/profile" element={<Profile />} /> 
-                        {/* Route danh sách sản phẩm */}
             <Route path="/pets" element={<Pets />} /> 
+            <Route path="/help" element={<Help />} />
             
             {/* Route cho trang phụ kiện, trỏ đến component Accessories mới */}
             <Route path="/accessories" element={<Accessories />} /> 
