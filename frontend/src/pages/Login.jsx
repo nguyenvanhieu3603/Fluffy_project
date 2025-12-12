@@ -14,9 +14,13 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      const res = await login(email, password);
       toast.success('Đăng nhập thành công!');
-      navigate('/');
+      if (res && res.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Đăng nhập thất bại');
     }
@@ -72,7 +76,7 @@ const Login = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
-                <Link to="/forgot-password" class="text-xs text-[var(--color-primary)] hover:underline">Quên mật khẩu?</Link>
+                <Link to="/forgot-password" className="text-xs text-[var(--color-primary)] hover:underline">Quên mật khẩu?</Link>
               </div>
               <div className="relative">
                 <span className="absolute left-3 top-3 text-gray-400"><FaLock /></span>
