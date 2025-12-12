@@ -45,12 +45,13 @@ export const AuthProvider = ({ children }) => {
       if (data.role === 'admin') {
           navigate('/admin/dashboard'); // Admin vào thẳng Dashboard
       } else if (data.role === 'seller') {
-          navigate('/seller/orders'); // Seller vào trang đơn hàng (hoặc dashboard)
+          navigate('/seller/dashboard'); // Seller vào trang đơn hàng (hoặc dashboard)
       } else {
           navigate('/'); // Khách về trang chủ
       }
       // -------------------------------
 
+      return data;
     } catch (error) {
       toast.error(error.response?.data?.message || 'Đăng nhập thất bại');
     }

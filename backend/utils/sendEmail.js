@@ -3,10 +3,10 @@ const nodemailer = require('nodemailer');
 const sendEmail = async (options) => {
   // 1. Tạo transporter (người vận chuyển)
   const transporter = nodemailer.createTransport({
-    service: 'gmail', // Hoặc dùng host/port nếu không dùng gmail
+    service: 'gmail', 
     auth: {
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS, // Lưu ý: Đây phải là App Password của Gmail, không phải pass đăng nhập thường
+      pass: process.env.EMAIL_PASS, 
     },
   });
 
@@ -16,7 +16,7 @@ const sendEmail = async (options) => {
     to: options.email,
     subject: options.subject,
     text: options.message,
-    // html: options.html // Nếu muốn gửi HTML đẹp thì dùng cái này sau
+    
   };
 
   // 3. Gửi

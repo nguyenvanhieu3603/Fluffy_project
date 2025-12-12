@@ -16,7 +16,7 @@ const Contact = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Vì chưa có API contact, ta chỉ giả lập gửi thành công
+    
     console.log("Contact Data:", formData);
     toast.success("Cảm ơn bạn! Chúng tôi đã nhận được tin nhắn và sẽ phản hồi sớm nhất.");
     setFormData({ name: '', email: '', subject: '', message: '' });

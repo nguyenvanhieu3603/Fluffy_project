@@ -10,11 +10,9 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null); 
 
-  // --- SỬA DÒNG NÀY ---
-  // Trỏ về ảnh trong thư mục uploads (Backend server file tĩnh)
-  // Vì ta đã cấu hình proxy '/uploads' -> 'http://localhost:5000/uploads' nên đường dẫn này hoạt động tốt
+
   const DEFAULT_AVATAR = "/uploads/default-avatar.jpg"; 
-  // --------------------
+
 
   const [infoForm, setInfoForm] = useState({
     fullName: '',

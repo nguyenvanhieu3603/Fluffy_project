@@ -6,10 +6,10 @@ const {
     getAllPetsAdmin,
     getAllAccessoriesAdmin,
     deleteUser,
-    getAllReviews,  // <-- Mới
-    deleteReview,   // <-- Mới
-    getAllReports,  // <-- Mới
-    resolveReport   // <-- Mới
+    getAllReviews,  
+    deleteReview,   
+    getAllReports,  
+    resolveReport   
 } = require('../controllers/adminController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 

@@ -14,13 +14,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await login(email, password);
-      toast.success('Đăng nhập thành công!');
-      if (res && res.role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/');
-      }
+      await login(email, password);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Đăng nhập thất bại');
     }

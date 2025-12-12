@@ -1,4 +1,4 @@
-// backend/controllers/blogController.js
+
 const Blog = require('../models/blogModel');
 
 // @desc    Lấy danh sách bài viết (Public)

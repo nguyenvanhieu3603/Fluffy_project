@@ -1,4 +1,4 @@
-// frontend/src/pages/Help.jsx
+
 import { useState } from 'react';
 import { FaSearch, FaChevronDown, FaChevronUp, FaPhoneAlt, FaEnvelope, FaBoxOpen, FaShippingFast, FaUndo, FaUserShield } from 'react-icons/fa';
 import { Link } from 'react-router-dom';

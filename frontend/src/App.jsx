@@ -19,13 +19,13 @@ import Shipping from './pages/Shipping';
 import PlaceOrder from './pages/PlaceOrder';
 import MyOrders from './pages/MyOrders';
 import OrderDetail from './pages/OrderDetail';
-import Profile from './pages/Profile'; // <-- Import trang mới
+import Profile from './pages/Profile'; 
 import Pets from './pages/Pets';
-import Accessories from './pages/Accessories'; // <-- Import component mới
+import Accessories from './pages/Accessories'; 
 import Blog from './pages/Blog';
 import BlogDetail from './pages/BlogDetail';
 import Contact from './pages/Contact';
-import ShopProfile from './pages/ShopProfile'; // <-- Import trang Shop mới
+import ShopProfile from './pages/ShopProfile'; 
 import Help from './pages/Help';
 
 // Admin & Seller
@@ -36,12 +36,12 @@ import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProductApprove from './pages/admin/AdminProductApprove';
 import AdminSellerApprove from './pages/admin/AdminSellerApprove';
-import AdminSellers from './pages/admin/AdminSellers'; // <-- Mới
-import AdminCustomers from './pages/admin/AdminCustomers'; // <-- Mới
-import AdminPets from './pages/admin/AdminPets'; // <-- Mới
+import AdminSellers from './pages/admin/AdminSellers'; 
+import AdminCustomers from './pages/admin/AdminCustomers'; 
+import AdminPets from './pages/admin/AdminPets'; 
 import SellerDashboard from './pages/seller/SellerDashboard';
 import AdminAccessories from './pages/admin/AdminAccessories';
-import AdminReviews from './pages/admin/AdminReviews'; // <-- Mới
+import AdminReviews from './pages/admin/AdminReviews'; 
 import AdminReports from './pages/admin/AdminReports';
 import AdminBlogs from './pages/admin/AdminBlogs';
 
@@ -60,7 +60,7 @@ const MainLayout = () => {
 };
 
 // Placeholder Seller Dashboard
-const SellerDashboardStats = () => <div className="p-6 bg-white rounded-xl shadow-sm">Thống kê doanh thu (Đang phát triển)</div>;
+const SellerDashboardStats = () => <div className="p-6 bg-white rounded-xl shadow-sm">Thống kê doanh thu </div>;
 
 function App() {
   return (
@@ -82,23 +82,13 @@ function App() {
             <Route path="/order/:id" element={<OrderDetail />} />
             <Route path="/profile" element={<Profile />} /> 
             <Route path="/pets" element={<Pets />} /> 
-            <Route path="/help" element={<Help />} />
-            
-            {/* Route cho trang phụ kiện, trỏ đến component Accessories mới */}
+            <Route path="/help" element={<Help />} />       
             <Route path="/accessories" element={<Accessories />} /> 
-
-            {/* Các trang mới: Blog, Chi tiết Blog, Liên hệ */}
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="/contact" element={<Contact />} />
-
-            {/* Route cho trang cửa hàng của người bán */}
             <Route path="/shop/:id" element={<ShopProfile />} />
-
-            {/* Seller Layout cũng lồng trong MainLayout để giữ Header, 
-                hoặc bạn có thể tách ra nếu muốn Seller không có Header web chính */}
             <Route path="/seller" element={<SellerLayout />}>
-                {/* SỬ DỤNG COMPONENT THẬT */}
                 <Route path="dashboard" element={<SellerDashboard />} /> 
                 <Route path="orders" element={<SellerOrders />} />
                 <Route path="products" element={<SellerProducts />} />
@@ -110,14 +100,10 @@ function App() {
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="approve-products" element={<AdminProductApprove />} />
             <Route path="approve-sellers" element={<AdminSellerApprove />} />
-            
-            {/* 3 TRANG QUẢN LÝ MỚI */}
             <Route path="sellers" element={<AdminSellers />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="pets" element={<AdminPets />} />
             <Route path="accessories" element={<AdminAccessories />} /> 
-
-                        {/* --- MỚI --- */}
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="blogs" element={<AdminBlogs />} />

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FaBell, FaCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import './NotificationMenu.css'; // Sẽ tạo file css nhỏ để scroll đẹp hơn
+import './NotificationMenu.css'; 
 
 const NotificationMenu = () => {
   const [notifications, setNotifications] = useState([]);
@@ -24,9 +24,7 @@ const NotificationMenu = () => {
   // Gọi API mỗi khi mở menu hoặc lần đầu load
   useEffect(() => {
     fetchNotifications();
-    // Có thể dùng setInterval để tự động check mỗi 60s nếu muốn
-    // const interval = setInterval(fetchNotifications, 60000);
-    // return () => clearInterval(interval);
+
   }, []);
 
   // Xử lý click ra ngoài để đóng menu

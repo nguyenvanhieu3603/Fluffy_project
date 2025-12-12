@@ -1,11 +1,11 @@
-// frontend/src/pages/BlogDetail.jsx (Cập nhật toàn bộ)
+
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import { FaCalendarAlt, FaUser, FaArrowLeft, FaFacebook, FaTwitter, FaLink, FaEye } from 'react-icons/fa';
 
 const BlogDetail = () => {
-  const { id } = useParams(); // Lúc này id thực chất là slug do ta đặt path là /blog/:id trong App.jsx, hoặc sửa App.jsx thành /blog/:slug
+  const { id } = useParams(); 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [recentPosts, setRecentPosts] = useState([]);

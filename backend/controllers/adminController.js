@@ -177,7 +177,6 @@ module.exports = {
   getAllPetsAdmin,
   getAllAccessoriesAdmin,
   deleteUser,
-  // --- MỚI ---
   getAllReviews,
   deleteReview,
   getAllReports,
