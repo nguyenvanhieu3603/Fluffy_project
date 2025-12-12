@@ -44,6 +44,7 @@ import AdminAccessories from './pages/admin/AdminAccessories';
 import AdminReviews from './pages/admin/AdminReviews'; 
 import AdminReports from './pages/admin/AdminReports';
 import AdminBlogs from './pages/admin/AdminBlogs';
+import AdminOrders from './pages/admin/AdminOrders'; // <-- Import trang mới
 
 // Component Layout dành cho Khách hàng (Có Header/Footer)
 const MainLayout = () => {
@@ -58,9 +59,6 @@ const MainLayout = () => {
     </div>
   );
 };
-
-// Placeholder Seller Dashboard
-const SellerDashboardStats = () => <div className="p-6 bg-white rounded-xl shadow-sm">Thống kê doanh thu </div>;
 
 function App() {
   return (
@@ -82,12 +80,16 @@ function App() {
             <Route path="/order/:id" element={<OrderDetail />} />
             <Route path="/profile" element={<Profile />} /> 
             <Route path="/pets" element={<Pets />} /> 
-            <Route path="/help" element={<Help />} />       
+            <Route path="/help" element={<Help />} />
+            
             <Route path="/accessories" element={<Accessories />} /> 
+
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="/contact" element={<Contact />} />
+
             <Route path="/shop/:id" element={<ShopProfile />} />
+
             <Route path="/seller" element={<SellerLayout />}>
                 <Route path="dashboard" element={<SellerDashboard />} /> 
                 <Route path="orders" element={<SellerOrders />} />
@@ -98,12 +100,15 @@ function App() {
         {/* --- NHÓM 2: ADMIN (Layout Riêng - Không Header/Footer Web) --- */}
         <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="orders" element={<AdminOrders />} /> {/* <-- Route mới */}
             <Route path="approve-products" element={<AdminProductApprove />} />
             <Route path="approve-sellers" element={<AdminSellerApprove />} />
+            
             <Route path="sellers" element={<AdminSellers />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="pets" element={<AdminPets />} />
             <Route path="accessories" element={<AdminAccessories />} /> 
+
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="blogs" element={<AdminBlogs />} />

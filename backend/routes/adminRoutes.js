@@ -6,10 +6,11 @@ const {
     getAllPetsAdmin,
     getAllAccessoriesAdmin,
     deleteUser,
-    getAllReviews,  
-    deleteReview,   
-    getAllReports,  
-    resolveReport   
+    getAllReviews,
+    deleteReview,
+    getAllReports,
+    resolveReport,
+    getAllOrders // Import hàm mới
 } = require('../controllers/adminController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
@@ -18,6 +19,9 @@ router.get('/users', protect, adminOnly, getUsersByRole);
 router.get('/pets', protect, adminOnly, getAllPetsAdmin);
 router.get('/accessories', protect, adminOnly, getAllAccessoriesAdmin);
 router.delete('/users/:id', protect, adminOnly, deleteUser);
+
+// --- ORDERS MANAGEMENT (MỚI) ---
+router.get('/orders', protect, adminOnly, getAllOrders);
 
 // --- REVIEWS MANAGEMENT ---
 router.get('/reviews', protect, adminOnly, getAllReviews);

@@ -1,6 +1,8 @@
 const User = require('../models/userModel');
 const Order = require('../models/orderModel');
 const Pet = require('../models/petModel');
+const Review = require('../models/reviewModel');
+const Report = require('../models/reportModel');
 
 // @desc    Lấy thống kê Dashboard
 // @route   GET /api/admin/stats
@@ -169,7 +171,20 @@ const resolveReport = async (req, res) => {
     }
 };
 
-
+// @desc    Lấy toàn bộ đơn hàng
+// @route   GET /api/admin/orders
+// @access  Private/Admin
+const getAllOrders = async (req, res) => {
+    try {
+        const orders = await Order.find({})
+            .populate('customer', 'fullName email')
+            .populate('seller', 'fullName sellerInfo.shopName')
+            .sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 module.exports = {
   getDashboardStats,
@@ -180,5 +195,6 @@ module.exports = {
   getAllReviews,
   deleteReview,
   getAllReports,
-  resolveReport
+  resolveReport,
+  getAllOrders 
 };

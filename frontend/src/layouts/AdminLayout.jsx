@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { FaChartPie, FaUserShield, FaClipboardCheck, FaStore, FaSignOutAlt, FaPaw, FaUsers, FaBoxOpen, FaStar, FaFlag } from 'react-icons/fa'; 
+import { FaChartPie, FaUserShield, FaClipboardCheck, FaStore, FaSignOutAlt, FaPaw, FaUsers, FaBoxOpen, FaStar, FaFlag, FaShoppingCart } from 'react-icons/fa'; 
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FaNewspaper } from 'react-icons/fa';
@@ -10,6 +10,10 @@ const AdminLayout = () => {
 
   const menuItems = [
     { path: '/admin/dashboard', icon: <FaChartPie />, label: 'Tổng quan' },
+    
+    // --- QUẢN LÝ GIAO DỊCH (MỚI) ---
+    { path: '/admin/orders', icon: <FaShoppingCart />, label: 'Quản lý Đơn hàng' },
+
     { path: '/admin/approve-products', icon: <FaClipboardCheck />, label: 'Duyệt Sản phẩm' },
     { path: '/admin/approve-sellers', icon: <FaStore />, label: 'Duyệt Đăng ký Shop' },
     
@@ -19,7 +23,7 @@ const AdminLayout = () => {
     { path: '/admin/pets', icon: <FaPaw />, label: 'Tất cả Thú cưng' },
     { path: '/admin/accessories', icon: <FaBoxOpen />, label: 'Tất cả Phụ kiện' },
     
-    // --- MỚI: QUẢN LÝ TƯƠNG TÁC ---
+    // --- QUẢN LÝ TƯƠNG TÁC ---
     { path: '/admin/reviews', icon: <FaStar />, label: 'Đánh giá & Bình luận' },
     { path: '/admin/reports', icon: <FaFlag />, label: 'Khiếu nại & Báo cáo' },
     { path: '/admin/blogs', icon: <FaNewspaper />, label: 'Quản lý Tin tức' },

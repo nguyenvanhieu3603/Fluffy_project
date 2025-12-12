@@ -1,7 +1,7 @@
 const multer = require('multer');
 
 // Cấu hình lưu trữ file trên RAM (memoryStorage)
-// Sau đó Cloudinary sẽ lấy từ RAM để upload
+
 const storage = multer.memoryStorage(); 
 
 // Hàm lọc file (chỉ chấp nhận ảnh)
