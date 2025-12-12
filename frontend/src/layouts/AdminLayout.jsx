@@ -1,8 +1,8 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-// Thêm icon FaStar, FaFlag
 import { FaChartPie, FaUserShield, FaClipboardCheck, FaStore, FaSignOutAlt, FaPaw, FaUsers, FaBoxOpen, FaStar, FaFlag } from 'react-icons/fa'; 
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { FaNewspaper } from 'react-icons/fa';
 
 const AdminLayout = () => {
   const location = useLocation();
@@ -22,6 +22,7 @@ const AdminLayout = () => {
     // --- MỚI: QUẢN LÝ TƯƠNG TÁC ---
     { path: '/admin/reviews', icon: <FaStar />, label: 'Đánh giá & Bình luận' },
     { path: '/admin/reports', icon: <FaFlag />, label: 'Khiếu nại & Báo cáo' },
+    { path: '/admin/blogs', icon: <FaNewspaper />, label: 'Quản lý Tin tức' },
   ];
 
   return (

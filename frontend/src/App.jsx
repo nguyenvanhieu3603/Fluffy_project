@@ -41,6 +41,7 @@ import SellerDashboard from './pages/seller/SellerDashboard';
 import AdminAccessories from './pages/admin/AdminAccessories';
 import AdminReviews from './pages/admin/AdminReviews'; // <-- Mới
 import AdminReports from './pages/admin/AdminReports';
+import AdminBlogs from './pages/admin/AdminBlogs';
 
 // Component Layout dành cho Khách hàng (Có Header/Footer)
 const MainLayout = () => {
@@ -116,6 +117,7 @@ function App() {
                         {/* --- MỚI --- */}
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="reports" element={<AdminReports />} />
+            <Route path="blogs" element={<AdminBlogs />} />
         </Route>
 
       </Routes>

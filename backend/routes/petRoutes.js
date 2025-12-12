@@ -22,7 +22,7 @@ router.get('/admin/pending', protect, adminOnly, getPendingPets);
 // --- SELLER ROUTES ---
 router.get('/my-pets', protect, sellerOnly, getMyPets); 
 
-// SỬA ĐOẠN NÀY: Dùng upload.fields để nhận nhiều loại file
+
 router.post('/', protect, sellerOnly, upload.fields([
     { name: 'images', maxCount: 5 },       // Tối đa 5 ảnh sản phẩm
     { name: 'certification', maxCount: 1 } // Tối đa 1 ảnh chứng nhận
