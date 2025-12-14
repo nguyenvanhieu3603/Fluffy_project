@@ -5,12 +5,12 @@ const {
     getUsersByRole, 
     getAllPetsAdmin,
     getAllAccessoriesAdmin,
-    deleteUser,
+    toggleUserStatus, // Sử dụng hàm mới
     getAllReviews,
     deleteReview,
     getAllReports,
     resolveReport,
-    getAllOrders // Import hàm mới
+    getAllOrders
 } = require('../controllers/adminController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
@@ -18,9 +18,11 @@ router.get('/stats', protect, adminOnly, getDashboardStats);
 router.get('/users', protect, adminOnly, getUsersByRole);
 router.get('/pets', protect, adminOnly, getAllPetsAdmin);
 router.get('/accessories', protect, adminOnly, getAllAccessoriesAdmin);
-router.delete('/users/:id', protect, adminOnly, deleteUser);
 
-// --- ORDERS MANAGEMENT (MỚI) ---
+// THAY ĐỔI: Chuyển từ DELETE sang PUT để khóa tài khoản
+router.put('/users/:id/status', protect, adminOnly, toggleUserStatus);
+
+// --- ORDERS MANAGEMENT ---
 router.get('/orders', protect, adminOnly, getAllOrders);
 
 // --- REVIEWS MANAGEMENT ---
