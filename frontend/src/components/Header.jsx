@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { FaSearch, FaShoppingCart, FaUser, FaBars, FaSignOutAlt, FaBoxOpen, FaCaretDown, FaPaw } from 'react-icons/fa';
 import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
@@ -92,9 +92,32 @@ const Header = () => {
                     </div>
                  </div>
                ) : (
+                 /* --- CẬP NHẬT PHẦN NÀY: Dùng NavLink để active style --- */
                  <>
-                    <Link to="/login" className="px-4 py-2 text-gray-600 hover:text-[var(--color-primary)] font-medium">Đăng nhập</Link>
-                    <Link to="/register" className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-full hover:bg-yellow-600 font-medium transition-colors">Đăng ký</Link>
+                    <NavLink 
+                        to="/login" 
+                        className={({ isActive }) => 
+                            `px-4 py-2 rounded-full font-medium transition-colors ${
+                                isActive 
+                                ? 'bg-yellow-100 text-[var(--color-primary)] shadow-inner' // Active: Nền vàng nhạt, chữ đậm
+                                : 'text-gray-600 hover:text-[var(--color-primary)] hover:bg-gray-50'
+                            }`
+                        }
+                    >
+                        Đăng nhập
+                    </NavLink>
+                    <NavLink 
+                        to="/register" 
+                        className={({ isActive }) => 
+                            `px-4 py-2 rounded-full font-medium transition-colors ${
+                                isActive 
+                                ? 'bg-yellow-100 text-[var(--color-primary)] shadow-inner' // Active: Nền vàng nhạt, chữ đậm
+                                : 'text-gray-600 hover:text-[var(--color-primary)] hover:bg-gray-50'
+                            }`
+                        }
+                    >
+                        Đăng ký
+                    </NavLink>
                  </>
                )}
             </div>
@@ -102,13 +125,13 @@ const Header = () => {
           </div>
         </div>
         
-        {/* Navbar */}
+        {/* Navbar - Cập nhật NavLink cho các menu chính luôn để đồng bộ */}
         <nav className="hidden md:flex items-center gap-8 mt-4 border-t border-gray-100 pt-3 text-sm font-semibold uppercase tracking-wide text-gray-600">
-          <Link to="/" className="hover:text-[var(--color-primary)] transition-colors">Trang chủ</Link>
-          <Link to="/pets" className="hover:text-[var(--color-primary)] transition-colors">Thú cưng</Link>
-          <Link to="/accessories" className="hover:text-[var(--color-primary)] transition-colors">Phụ kiện</Link>
-          <Link to="/blog" className="hover:text-[var(--color-primary)] transition-colors">Kinh nghiệm nuôi</Link>
-          <Link to="/contact" className="hover:text-[var(--color-primary)] transition-colors">Liên hệ</Link>
+          <NavLink to="/" end className={({isActive}) => isActive ? "text-[var(--color-primary)]" : "hover:text-[var(--color-primary)] transition-colors"}>Trang chủ</NavLink>
+          <NavLink to="/pets" className={({isActive}) => isActive ? "text-[var(--color-primary)]" : "hover:text-[var(--color-primary)] transition-colors"}>Thú cưng</NavLink>
+          <NavLink to="/accessories" className={({isActive}) => isActive ? "text-[var(--color-primary)]" : "hover:text-[var(--color-primary)] transition-colors"}>Phụ kiện</NavLink>
+          <NavLink to="/blog" className={({isActive}) => isActive ? "text-[var(--color-primary)]" : "hover:text-[var(--color-primary)] transition-colors"}>Kinh nghiệm nuôi</NavLink>
+          <NavLink to="/contact" className={({isActive}) => isActive ? "text-[var(--color-primary)]" : "hover:text-[var(--color-primary)] transition-colors"}>Liên hệ</NavLink>
         </nav>
       </div>
 
@@ -138,8 +161,8 @@ const Header = () => {
               </>
           ) : (
               <>
-                <Link to="/login" className="font-medium">Đăng nhập</Link>
-                <Link to="/register" className="font-medium">Đăng ký</Link>
+                <Link to="/login" className="font-medium text-[var(--color-primary)]">Đăng nhập</Link>
+                <Link to="/register" className="font-medium text-[var(--color-primary)]">Đăng ký</Link>
               </>
           )}
         </div>
