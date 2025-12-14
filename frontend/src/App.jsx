@@ -44,7 +44,9 @@ import AdminAccessories from './pages/admin/AdminAccessories';
 import AdminReviews from './pages/admin/AdminReviews'; 
 import AdminReports from './pages/admin/AdminReports';
 import AdminBlogs from './pages/admin/AdminBlogs';
-import AdminOrders from './pages/admin/AdminOrders'; // <-- Import trang mới
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminCategories from './pages/admin/AdminCategories'; // MỚI IMPORT
+import AdminCoupons from './pages/admin/AdminCoupons'; // MỚI IMPORT
 
 // Component Layout dành cho Khách hàng (Có Header/Footer)
 const MainLayout = () => {
@@ -100,10 +102,15 @@ function App() {
         {/* --- NHÓM 2: ADMIN (Layout Riêng - Không Header/Footer Web) --- */}
         <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="orders" element={<AdminOrders />} /> {/* <-- Route mới */}
+            <Route path="orders" element={<AdminOrders />} />
             <Route path="approve-products" element={<AdminProductApprove />} />
             <Route path="approve-sellers" element={<AdminSellerApprove />} />
             
+            {/* --- CÁC ROUTE MỚI --- */}
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="coupons" element={<AdminCoupons />} />
+            {/* ------------------- */}
+
             <Route path="sellers" element={<AdminSellers />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="pets" element={<AdminPets />} />

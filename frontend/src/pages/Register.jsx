@@ -1,152 +1,133 @@
-
 import { useState, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaUser, FaEnvelope, FaLock, FaPhone, FaPaw } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Register = () => {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phone: ''
-  });
-
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       return toast.error('Mật khẩu nhập lại không khớp');
     }
     try {
-      await register(formData.fullName, formData.email, formData.password, formData.phone);
-      toast.success('Đăng ký thành công! Vui lòng đăng nhập.');
-      navigate('/login');
+      await register(name, email, password);
+      // Logic điều hướng thường nằm trong AuthContext hoặc sau khi register thành công
     } catch (error) {
       toast.error(error.response?.data?.message || 'Đăng ký thất bại');
     }
   };
 
   return (
-    <div className="min-h-screen flex bg-white">
-      {/* CỘT TRÁI: FORM ĐĂNG KÝ */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
-        <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-100">
-          <div className="text-center mb-8">
-            <div className="inline-block p-3 rounded-full bg-orange-100 text-[var(--color-primary)] mb-4">
-                <FaPaw className="text-3xl" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-800">Tạo Tài Khoản</h2>
-            <p className="text-gray-500 mt-2">Tham gia cộng đồng yêu thú cưng ngay hôm nay</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4" >
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-gray-400"><FaUser /></span>
-                <input
-                  type="text" name="fullName"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--color-primary)]"
-                  placeholder="Nguyễn Văn A"
-                  onChange={handleChange} required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-gray-400"><FaEnvelope /></span>
-                <input
-                  type="email" name="email"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--color-primary)]"
-                  placeholder="name@example.com"
-                  onChange={handleChange} required
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
-              <div className="relative">
-                <span className="absolute left-3 top-3 text-gray-400"><FaPhone /></span>
-                <input
-                  type="text" name="phone"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--color-primary)]"
-                  placeholder="0901234567"
-                  onChange={handleChange} required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
-                <div className="relative">
-                    <span className="absolute left-3 top-3 text-gray-400"><FaLock /></span>
-                    <input
-                    type="password" name="password"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--color-primary)]"
-                    placeholder="••••••••"
-                    onChange={handleChange} required
-                    />
-                </div>
-                </div>
-                <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nhập lại MK</label>
-                <div className="relative">
-                    <span className="absolute left-3 top-3 text-gray-400"><FaLock /></span>
-                    <input
-                    type="password" name="confirmPassword"
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--color-primary)]"
-                    placeholder="••••••••"
-                    onChange={handleChange} required
-                    />
-                </div>
-                </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-[var(--color-primary)] text-white py-3 rounded-lg font-bold text-lg hover:bg-yellow-600 transition duration-300 shadow-md mt-4"
-            >
-              Đăng Ký
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-gray-600">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Đăng ký tài khoản
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
             Đã có tài khoản?{' '}
-            <Link to="/login" className="text-[var(--color-primary)] font-bold hover:underline">
-              Đăng nhập
+            <Link to="/login" className="font-medium text-[var(--color-primary)] hover:text-yellow-600">
+              Đăng nhập ngay
             </Link>
           </p>
         </div>
-      </div>
+        
+        {/* Tắt tự động điền */}
+        <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2">Họ tên</label>
+            <div className="relative">
+              <FaUser className="absolute left-3 top-3 text-gray-400" />
+              <input
+                type="text"
+                required
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
+                placeholder="Nhập họ tên của bạn"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="off"
+                name="name_register_field_no_autofill"
+              />
+            </div>
+          </div>
 
-       {/* CỘT PHẢI: ẢNH (Ẩn trên mobile) */}
-       <div className="hidden lg:flex w-1/2 bg-blue-50 items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 z-0">
-             {/* Link ảnh Mèo online */}
-            <img 
-                src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=2043&auto=format&fit=crop" 
-                alt="Cute Cat" 
-                className="w-full h-full object-cover"
-            />
-             <div className="absolute inset-0 bg-black/20"></div>
-        </div>
-        <div className="relative z-10 text-white text-center p-12">
-            <h2 className="text-4xl font-bold mb-4 drop-shadow-lg">Gia nhập đại gia đình Fluffy</h2>
-            <p className="text-lg drop-shadow-md">Chăm sóc thú cưng chưa bao giờ dễ dàng đến thế.</p>
-        </div>
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2">Email</label>
+            <div className="relative">
+              <FaEnvelope className="absolute left-3 top-3 text-gray-400" />
+              <input
+                type="email"
+                required
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
+                placeholder="Nhập email của bạn"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="off"
+                name="email_register_field_no_autofill"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2">Mật khẩu</label>
+            <div className="relative">
+              <FaLock className="absolute left-3 top-3 text-gray-400" />
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                className="w-full pl-10 pr-10 py-2 border rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
+                placeholder="Nhập mật khẩu"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                name="password_register_field_no_autofill"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2">Nhập lại mật khẩu</label>
+            <div className="relative">
+              <FaLock className="absolute left-3 top-3 text-gray-400" />
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                className="w-full pl-10 pr-10 py-2 border rounded-lg focus:outline-none focus:border-[var(--color-primary)]"
+                placeholder="Nhập lại mật khẩu"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                name="confirm_password_field_no_autofill"
+              />
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[var(--color-primary)] hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]"
+            >
+              Đăng ký
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

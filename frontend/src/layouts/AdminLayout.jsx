@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { FaChartPie, FaUserShield, FaClipboardCheck, FaStore, FaSignOutAlt, FaPaw, FaUsers, FaBoxOpen, FaStar, FaFlag, FaShoppingCart } from 'react-icons/fa'; 
+import { FaChartPie, FaUserShield, FaClipboardCheck, FaStore, FaSignOutAlt, FaPaw, FaUsers, FaBoxOpen, FaStar, FaFlag, FaShoppingCart, FaList, FaTicketAlt } from 'react-icons/fa'; 
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { FaNewspaper } from 'react-icons/fa';
@@ -10,14 +10,15 @@ const AdminLayout = () => {
 
   const menuItems = [
     { path: '/admin/dashboard', icon: <FaChartPie />, label: 'Tổng quan' },
-    
-    // --- QUẢN LÝ GIAO DỊCH (MỚI) ---
     { path: '/admin/orders', icon: <FaShoppingCart />, label: 'Quản lý Đơn hàng' },
 
     { path: '/admin/approve-products', icon: <FaClipboardCheck />, label: 'Duyệt Sản phẩm' },
     { path: '/admin/approve-sellers', icon: <FaStore />, label: 'Duyệt Đăng ký Shop' },
     
     // --- QUẢN LÝ DỮ LIỆU ---
+    { path: '/admin/categories', icon: <FaList />, label: 'Danh mục (Giống loài)' }, // MỚI
+    { path: '/admin/coupons', icon: <FaTicketAlt />, label: 'Mã Giảm Giá' },       // MỚI
+    
     { path: '/admin/sellers', icon: <FaStore />, label: 'Danh sách Người bán' },
     { path: '/admin/customers', icon: <FaUsers />, label: 'Danh sách Khách hàng' },
     { path: '/admin/pets', icon: <FaPaw />, label: 'Tất cả Thú cưng' },
