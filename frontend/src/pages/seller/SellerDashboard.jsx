@@ -1,4 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom'; // <--- MỚI: Import hook điều hướng
 import api from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 import { FaShoppingBag, FaBoxOpen, FaMoneyBillWave, FaClipboardList } from 'react-icons/fa';
@@ -18,6 +19,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const SellerDashboard = () => {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate(); // <--- MỚI: Khởi tạo hook
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalProducts: 0,
@@ -45,11 +47,11 @@ const SellerDashboard = () => {
 
   // Cấu hình biểu đồ
   const chartData = {
-    labels: stats.monthlyRevenue.map(item => item.name),
+    labels: stats.monthlyRevenue?.map(item => item.name) || [], // Thêm optional chaining để tránh lỗi null
     datasets: [
       {
         label: 'Doanh thu (VND)',
-        data: stats.monthlyRevenue.map(item => item.sales),
+        data: stats.monthlyRevenue?.map(item => item.sales) || [],
         backgroundColor: 'rgba(59, 130, 246, 0.8)', // Màu xanh dương (Blue-500)
         borderRadius: 4,
       },
@@ -140,7 +142,10 @@ const SellerDashboard = () => {
                   <div className="bg-yellow-50 border border-yellow-100 p-6 rounded-xl">
                       <h3 className="font-bold text-yellow-800 mb-2">Cần xử lý ngay!</h3>
                       <p className="text-sm text-yellow-700 mb-4">Bạn có <strong>{stats.pendingOrders} đơn hàng</strong> mới đang chờ xác nhận.</p>
-                      <button className="w-full bg-yellow-500 text-white py-2 rounded-lg font-bold hover:bg-yellow-600 shadow-sm">
+                      <button 
+                        onClick={() => navigate('/seller/orders')} // <--- MỚI: Điều hướng
+                        className="w-full bg-yellow-500 text-white py-2 rounded-lg font-bold hover:bg-yellow-600 shadow-sm transition-colors"
+                      >
                           Xử lý ngay
                       </button>
                   </div>

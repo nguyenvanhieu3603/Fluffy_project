@@ -31,7 +31,9 @@ import Help from './pages/Help';
 // Admin & Seller
 import SellerLayout from './layouts/SellerLayout'; 
 import SellerOrders from './pages/seller/SellerOrders';
-import SellerProducts from './pages/seller/SellerProducts';
+import SellerPets from './pages/seller/SellerPets'; // IMPORT MỚI
+import SellerAccessories from './pages/seller/SellerAccessories'; // IMPORT MỚI
+
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProductApprove from './pages/admin/AdminProductApprove';
@@ -45,8 +47,8 @@ import AdminReviews from './pages/admin/AdminReviews';
 import AdminReports from './pages/admin/AdminReports';
 import AdminBlogs from './pages/admin/AdminBlogs';
 import AdminOrders from './pages/admin/AdminOrders';
-import AdminCategories from './pages/admin/AdminCategories'; // MỚI IMPORT
-import AdminCoupons from './pages/admin/AdminCoupons'; // MỚI IMPORT
+import AdminCategories from './pages/admin/AdminCategories';
+import AdminCoupons from './pages/admin/AdminCoupons';
 
 // Component Layout dành cho Khách hàng (Có Header/Footer)
 const MainLayout = () => {
@@ -95,7 +97,9 @@ function App() {
             <Route path="/seller" element={<SellerLayout />}>
                 <Route path="dashboard" element={<SellerDashboard />} /> 
                 <Route path="orders" element={<SellerOrders />} />
-                <Route path="products" element={<SellerProducts />} />
+                {/* Thay thế route cũ "products" bằng 2 route mới */}
+                <Route path="pets" element={<SellerPets />} />
+                <Route path="accessories" element={<SellerAccessories />} />
             </Route>
         </Route>
 
@@ -106,10 +110,8 @@ function App() {
             <Route path="approve-products" element={<AdminProductApprove />} />
             <Route path="approve-sellers" element={<AdminSellerApprove />} />
             
-            {/* --- CÁC ROUTE MỚI --- */}
             <Route path="categories" element={<AdminCategories />} />
             <Route path="coupons" element={<AdminCoupons />} />
-            {/* ------------------- */}
 
             <Route path="sellers" element={<AdminSellers />} />
             <Route path="customers" element={<AdminCustomers />} />

@@ -1,13 +1,30 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { FaBoxOpen, FaClipboardList, FaStore, FaChartLine } from 'react-icons/fa';
+import { FaBoxOpen, FaClipboardList, FaStore, FaChartLine, FaPaw } from 'react-icons/fa';
 
 const SellerLayout = () => {
   const location = useLocation();
 
   const menuItems = [
-    { path: '/seller/dashboard', icon: <FaChartLine />, label: 'Thống kê' },
-    { path: '/seller/orders', icon: <FaClipboardList />, label: 'Quản lý Đơn hàng' },
-    { path: '/seller/products', icon: <FaBoxOpen />, label: 'Quản lý Sản phẩm' }, // Sẽ làm sau
+    { 
+        path: '/seller/dashboard', 
+        icon: <FaChartLine />, 
+        label: 'Thống kê' 
+    },
+    { 
+        path: '/seller/orders', 
+        icon: <FaClipboardList />, 
+        label: 'Quản lý Đơn hàng' 
+    },
+    { 
+        path: '/seller/pets',  // Đổi path
+        icon: <FaPaw />, 
+        label: 'Quản lý Thú cưng' 
+    },
+    { 
+        path: '/seller/accessories', // Đổi path
+        icon: <FaBoxOpen />, 
+        label: 'Quản lý Phụ kiện' 
+    },
   ];
 
   return (
@@ -19,27 +36,31 @@ const SellerLayout = () => {
                 <FaStore /> Kênh Người Bán
             </div>
             <nav className="flex flex-col p-2">
-                {menuItems.map((item) => (
-                    <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium ${
-                            location.pathname === item.path
-                            ? 'bg-yellow-50 text-[var(--color-primary)]'
-                            : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                    >
-                        {item.icon}
-                        {item.label}
-                    </Link>
-                ))}
+                {menuItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+
+                    return (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium ${
+                                isActive
+                                ? 'bg-yellow-50 text-[var(--color-primary)] font-bold'
+                                : 'text-gray-600 hover:bg-gray-50'
+                            }`}
+                        >
+                            <span className="text-lg">{item.icon}</span>
+                            {item.label}
+                        </Link>
+                    );
+                })}
             </nav>
         </div>
       </div>
 
       {/* MAIN CONTENT */}
       <div className="w-full md:w-3/4 lg:w-4/5">
-          <Outlet /> {/* Nơi hiển thị nội dung các trang con */}
+          <Outlet />
       </div>
     </div>
   );
