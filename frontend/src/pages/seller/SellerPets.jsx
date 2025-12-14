@@ -9,18 +9,15 @@ const SellerPets = () => {
   const [allCategories, setAllCategories] = useState([]); 
   const [loading, setLoading] = useState(true);
   
-  // Filter & Pagination States
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Modal States
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
-  // Form States
   const [parentGroup, setParentGroup] = useState(''); 
   const [filteredSubCats, setFilteredSubCats] = useState([]); 
   const [formData, setFormData] = useState({
@@ -38,7 +35,6 @@ const SellerPets = () => {
     fetchCategories();
   }, []);
 
-  // Logic lọc danh mục con (Chỉ lấy danh mục Thú cưng)
   useEffect(() => {
       if (parentGroup) {
           const subs = allCategories.filter(c => c.parentId === parentGroup || c.parentId?._id === parentGroup);
@@ -48,28 +44,21 @@ const SellerPets = () => {
       }
   }, [parentGroup, allCategories]);
 
-  // --- LOGIC LỌC & SẮP XẾP ---
   useEffect(() => {
       let result = [...pets];
+      // Lọc theo type = pet
+      result = result.filter(p => p.type === 'pet');
 
-      // 1. Chỉ lấy Thú cưng (có thông tin giống hoặc tuổi...)
-      result = result.filter(p => p.breed || p.age || p.gender);
-
-      // 2. Tìm kiếm
       if (searchTerm) {
           result = result.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
       }
 
-      // 3. Sắp xếp
       switch(sortOption) {
           case 'newest': result.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); break;
           case 'oldest': result.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt)); break;
           case 'price-asc': result.sort((a,b) => a.price - b.price); break;
           case 'price-desc': result.sort((a,b) => b.price - a.price); break;
-          case 'stock-asc': result.sort((a,b) => a.stock - b.stock); break;
-          case 'stock-desc': result.sort((a,b) => b.stock - a.stock); break;
       }
-
       setDisplayedPets(result);
   }, [pets, searchTerm, sortOption]);
 
@@ -94,7 +83,6 @@ const SellerPets = () => {
       return allCategories.filter(c => c.parentId === root._id || c.parentId?._id === root._id);
   };
 
-  // --- Form Handlers ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -128,29 +116,34 @@ const SellerPets = () => {
           if (selectedCat) breedName = selectedCat.name;
       }
 
+      const data = new FormData();
+      data.append('name', formData.name);
+      data.append('description', formData.description);
+      data.append('price', formData.price);
+      data.append('stock', formData.stock);
+      data.append('category', formData.category);
+      data.append('status', 'available'); 
+
+      // --- QUAN TRỌNG: GỬI TYPE LÊN ---
+      data.append('type', 'pet'); 
+      // -------------------------------
+
+      data.append('age', formData.age);
+      data.append('gender', formData.gender);
+      data.append('breed', breedName);
+      data.append('weight', formData.weight);
+      data.append('length', formData.length);
+      
+      if (certFile) data.append('certification', certFile);
+      
+      if (formData.images.length > 0) {
+          formData.images.forEach((file) => data.append('images', file));
+      }
+
       if (isEditMode) {
-        await api.put(`/pets/${editingId}`, {
-            name: formData.name, description: formData.description, price: formData.price, stock: formData.stock, status: 'available',
-            age: formData.age, gender: formData.gender, weight: formData.weight, length: formData.length 
-        });
+        await api.put(`/pets/${editingId}`, data);
         toast.success('Cập nhật thú cưng thành công!');
       } else {
-        const data = new FormData();
-        data.append('name', formData.name);
-        data.append('description', formData.description);
-        data.append('price', formData.price);
-        data.append('stock', formData.stock);
-        data.append('category', formData.category);
-        
-        data.append('age', formData.age);
-        data.append('gender', formData.gender);
-        data.append('breed', breedName);
-        data.append('weight', formData.weight);
-        data.append('length', formData.length);
-        if (certFile) data.append('certification', certFile);
-        
-        formData.images.forEach((file) => data.append('images', file));
-
         await api.post('/pets', data);
         toast.success('Đăng bán thú cưng thành công!');
       }
@@ -159,6 +152,7 @@ const SellerPets = () => {
       resetForm();
       fetchMyPets();
     } catch (error) {
+      console.error(error);
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
     }
   };
@@ -177,10 +171,11 @@ const SellerPets = () => {
           name: pet.name, description: pet.description, price: pet.price, stock: pet.stock, category: pet.category._id,
           age: pet.age || '', gender: pet.gender || 'Đực', breed: pet.breed || '', 
           weight: pet.weight || '', length: pet.length || '',
-          images: []
+          images: [] // Reset mảng file upload
       });
       setPreviewImages(pet.images || []);
-      setCertFile(null); setCertPreview(null);
+      setCertFile(null); 
+      setCertPreview(pet.healthInfo?.vaccinationCertificate ? `http://localhost:5000${pet.healthInfo.vaccinationCertificate}` : null);
       setShowModal(true);
   };
 
@@ -199,7 +194,6 @@ const SellerPets = () => {
 
   const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
-  // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = displayedPets.slice(indexOfFirstItem, indexOfLastItem);
@@ -216,7 +210,6 @@ const SellerPets = () => {
         </div>
         
         <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
-            {/* Search */}
             <div className="relative flex-grow md:flex-grow-0">
                 <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
                 <input 
@@ -228,12 +221,7 @@ const SellerPets = () => {
                 />
             </div>
             
-            {/* Sort */}
-            <select 
-                value={sortOption} 
-                onChange={(e) => setSortOption(e.target.value)} 
-                className="px-3 py-2 border rounded-lg text-sm bg-gray-50 focus:outline-none"
-            >
+            <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="px-3 py-2 border rounded-lg text-sm bg-gray-50 focus:outline-none">
                 <option value="newest">Mới nhất</option>
                 <option value="oldest">Cũ nhất</option>
                 <option value="price-asc">Giá tăng dần</option>
@@ -304,7 +292,6 @@ const SellerPets = () => {
                 </div>
             )}
             
-            {/* PAGINATION */}
             {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-6 pt-4 border-t border-gray-100">
                     <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="p-2 border rounded hover:bg-gray-50 disabled:opacity-50"><FaAngleLeft /></button>
@@ -315,7 +302,6 @@ const SellerPets = () => {
           </div>
       )}
 
-      {/* --- FORM MODAL THÚ CƯNG --- */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -384,32 +370,30 @@ const SellerPets = () => {
                         </div>
                     </div>
 
-                    {!isEditMode && (
-                        <div className="mt-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Giấy chứng nhận sức khỏe <span className="text-red-500">*</span></label>
-                            <div className="border border-gray-300 rounded-lg p-3 flex items-center gap-4 bg-blue-50/50">
-                                <input type="file" accept="image/*" onChange={handleCertChange} className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-                                {certPreview && <img src={certPreview} alt="Cert Preview" className="h-10 w-10 object-cover rounded border"/>}
-                                {!certPreview && <FaFileMedical className="text-gray-400 text-xl"/>}
-                            </div>
+                    <div className="mt-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Giấy chứng nhận sức khỏe {isEditMode ? '(Tùy chọn)' : '<span className="text-red-500">*</span>'}</label>
+                        <div className="border border-gray-300 rounded-lg p-3 flex items-center gap-4 bg-blue-50/50">
+                            <input type="file" accept="image/*" onChange={handleCertChange} className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                            {certPreview && <img src={certPreview} alt="Cert Preview" className="h-10 w-10 object-cover rounded border"/>}
+                            {!certPreview && <FaFileMedical className="text-gray-400 text-xl"/>}
                         </div>
-                    )}
+                    </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả chi tiết</label>
                         <textarea name="description" rows="3" required value={formData.description} onChange={handleInputChange} className="w-full border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-primary)]" placeholder="Mô tả về tình trạng sức khỏe, tiêm phòng..."></textarea>
                     </div>
 
-                    {!isEditMode && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Hình ảnh (Tối đa 5 ảnh) <span className="text-red-500">*</span></label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 relative transition-colors">
-                                <input type="file" multiple accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"/>
-                                <FaImage className="mx-auto text-gray-400 text-2xl mb-2"/>
-                                <span className="text-sm text-gray-500">Kéo thả hoặc click để tải ảnh lên</span>
-                            </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Hình ảnh {isEditMode && <span className="text-gray-400 font-normal">(Chọn ảnh mới để thay thế ảnh cũ)</span>} <span className="text-red-500">*</span>
+                        </label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 relative transition-colors">
+                            <input type="file" multiple accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"/>
+                            <FaImage className="mx-auto text-gray-400 text-2xl mb-2"/>
+                            <span className="text-sm text-gray-500">Kéo thả hoặc click để tải ảnh lên</span>
                         </div>
-                    )}
+                    </div>
 
                     {previewImages.length > 0 && (
                         <div className="flex gap-2 overflow-x-auto py-2">

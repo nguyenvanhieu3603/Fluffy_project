@@ -145,16 +145,22 @@ const toggleUserStatus = async (req, res) => {
 
 const getAllPetsAdmin = async (req, res) => {
     try {
-        const pets = await Pet.find({ breed: { $exists: true, $ne: null } })
-            .populate('seller', 'fullName email sellerInfo.shopName').populate('category', 'name').sort({ createdAt: -1 });
+        // Lấy tất cả có type là 'pet'
+        const pets = await Pet.find({ type: 'pet' })
+            .populate('seller', 'fullName email sellerInfo.shopName')
+            .populate('category', 'name')
+            .sort({ createdAt: -1 });
         res.json(pets);
     } catch (error) { res.status(500).json({ message: error.message }); }
 }
 
 const getAllAccessoriesAdmin = async (req, res) => {
     try {
-        const accessories = await Pet.find({ $or: [{ breed: { $exists: false } }, { breed: null }] })
-            .populate('seller', 'fullName email sellerInfo.shopName').populate('category', 'name').sort({ createdAt: -1 });
+        // Lấy tất cả có type là 'accessory'
+        const accessories = await Pet.find({ type: 'accessory' })
+            .populate('seller', 'fullName email sellerInfo.shopName')
+            .populate('category', 'name')
+            .sort({ createdAt: -1 });
         res.json(accessories);
     } catch (error) { res.status(500).json({ message: error.message }); }
 }
@@ -199,5 +205,14 @@ const getAllOrders = async (req, res) => {
 };
 
 module.exports = {
-  getDashboardStats, getUsersByRole, toggleUserStatus, getAllPetsAdmin, getAllAccessoriesAdmin, getAllReviews, deleteReview, getAllReports, resolveReport, getAllOrders 
+  getDashboardStats, 
+  getUsersByRole, 
+  toggleUserStatus, 
+  getAllPetsAdmin, 
+  getAllAccessoriesAdmin, 
+  getAllReviews, 
+  deleteReview, 
+  getAllReports, 
+  resolveReport, 
+  getAllOrders 
 };

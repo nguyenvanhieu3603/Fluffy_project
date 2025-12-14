@@ -31,8 +31,8 @@ import Help from './pages/Help';
 // Admin & Seller
 import SellerLayout from './layouts/SellerLayout'; 
 import SellerOrders from './pages/seller/SellerOrders';
-import SellerPets from './pages/seller/SellerPets'; // IMPORT MỚI
-import SellerAccessories from './pages/seller/SellerAccessories'; // IMPORT MỚI
+import SellerPets from './pages/seller/SellerPets'; 
+import SellerAccessories from './pages/seller/SellerAccessories'; 
 
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -50,7 +50,7 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminCoupons from './pages/admin/AdminCoupons';
 
-// Component Layout dành cho Khách hàng (Có Header/Footer)
+// Component Layout dành cho Khách hàng 
 const MainLayout = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
@@ -68,7 +68,7 @@ function App() {
   return (
     <>
       <Routes>
-        {/* --- NHÓM 1: PUBLIC & CUSTOMER (Dùng MainLayout) --- */}
+        {/* --- NHÓM 1: PUBLIC & CUSTOMER --- */}
         <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -103,7 +103,7 @@ function App() {
             </Route>
         </Route>
 
-        {/* --- NHÓM 2: ADMIN (Layout Riêng - Không Header/Footer Web) --- */}
+        {/* --- NHÓM 2: ADMIN --- */}
         <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />

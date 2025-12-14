@@ -13,7 +13,7 @@ const notificationSchema = new mongoose.Schema({
       enum: ['order', 'system', 'promotion'], 
       default: 'order' 
   },
-  link: { type: String }, // Đường dẫn khi click vào (VD: /order/123)
+  link: { type: String }, 
   isRead: { type: Boolean, default: false },
 }, {
   timestamps: true

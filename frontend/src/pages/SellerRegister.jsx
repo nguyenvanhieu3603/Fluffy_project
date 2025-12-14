@@ -3,12 +3,12 @@ import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { FaStore } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api'; // Import api instance
+import api from '../services/api'; 
 
 const SellerRegister = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false); // Thêm trạng thái loading
+  const [loading, setLoading] = useState(false); 
 
   const [formData, setFormData] = useState({
     shopName: '',
@@ -61,11 +61,8 @@ const SellerRegister = () => {
         const { data } = await api.post('/users/seller-register', formData);
         
         toast.success(data.message);
-        
-        // Cập nhật lại thông tin user trong LocalStorage hoặc bắt user login lại để refresh role (đơn giản nhất là báo thành công và chuyển trang)
-        // Ở đây ta chuyển về trang profile hoặc home
         setTimeout(() => {
-             // Reload lại trang để AuthContext cập nhật lại thông tin user mới (có sellerInfo.status = pending)
+             
              window.location.reload(); 
         }, 1500);
 

@@ -10,7 +10,7 @@ const couponSchema = new mongoose.Schema({
   },
   discountType: {
     type: String,
-    enum: ['percent', 'fixed'], // Giảm theo % hoặc số tiền cố định
+    enum: ['percent', 'fixed'], 
     required: true
   },
   discountValue: {

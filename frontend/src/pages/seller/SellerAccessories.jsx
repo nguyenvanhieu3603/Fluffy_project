@@ -9,18 +9,15 @@ const SellerAccessories = () => {
   const [allCategories, setAllCategories] = useState([]); 
   const [loading, setLoading] = useState(true);
   
-  // Filter & Pagination States
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Modal States
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
-  // Form States
   const [parentGroup, setParentGroup] = useState(''); 
   const [filteredSubCats, setFilteredSubCats] = useState([]); 
   const [formData, setFormData] = useState({
@@ -34,7 +31,6 @@ const SellerAccessories = () => {
     fetchCategories();
   }, []);
 
-  // Logic lọc danh mục con (Chỉ lấy danh mục Phụ kiện)
   useEffect(() => {
       if (parentGroup) {
           const subs = allCategories.filter(c => c.parentId === parentGroup || c.parentId?._id === parentGroup);
@@ -44,26 +40,20 @@ const SellerAccessories = () => {
       }
   }, [parentGroup, allCategories]);
 
-  // --- LOGIC LỌC & SẮP XẾP ---
   useEffect(() => {
       let result = [...products];
+      // Lọc theo type = accessory
+      result = result.filter(p => p.type === 'accessory');
 
-      // 1. Chỉ lấy Phụ kiện (những sp không có breed/age)
-      result = result.filter(p => !p.breed && !p.age);
-
-      // 2. Tìm kiếm
       if (searchTerm) {
           result = result.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
       }
 
-      // 3. Sắp xếp
       switch(sortOption) {
           case 'newest': result.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); break;
           case 'oldest': result.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt)); break;
           case 'price-asc': result.sort((a,b) => a.price - b.price); break;
           case 'price-desc': result.sort((a,b) => b.price - a.price); break;
-          case 'stock-asc': result.sort((a,b) => a.stock - b.stock); break;
-          case 'stock-desc': result.sort((a,b) => b.stock - a.stock); break;
       }
 
       setDisplayedProducts(result);
@@ -71,7 +61,7 @@ const SellerAccessories = () => {
 
   const fetchMyProducts = async () => {
     try {
-      const { data } = await api.get('/pets/my-pets'); // API dùng chung, lọc ở client
+      const { data } = await api.get('/pets/my-pets'); // API trả về hết, mình lọc ở client hoặc server đều được
       setProducts(data);
     } catch (error) { toast.error('Lỗi tải danh sách'); } 
     finally { setLoading(false); }
@@ -90,7 +80,6 @@ const SellerAccessories = () => {
       return allCategories.filter(c => c.parentId === root._id || c.parentId?._id === root._id);
   };
 
-  // --- Form Handlers ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -109,25 +98,25 @@ const SellerAccessories = () => {
     if (!isEditMode && formData.images.length === 0) return toast.error('Vui lòng chọn ảnh');
 
     try {
+      const data = new FormData();
+      data.append('name', formData.name);
+      data.append('description', formData.description);
+      data.append('price', formData.price);
+      data.append('stock', formData.stock);
+      data.append('category', formData.category);
+      
+      // --- QUAN TRỌNG: GỬI TYPE LÊN ---
+      data.append('type', 'accessory'); 
+      // -------------------------------
+      
+      if (formData.images.length > 0) {
+          formData.images.forEach((file) => data.append('images', file));
+      }
+
       if (isEditMode) {
-        await api.put(`/pets/${editingId}`, {
-            name: formData.name, description: formData.description, price: formData.price, stock: formData.stock, status: 'available'
-        });
+        await api.put(`/pets/${editingId}`, data);
         toast.success('Cập nhật phụ kiện thành công!');
       } else {
-        const data = new FormData();
-        data.append('name', formData.name);
-        data.append('description', formData.description);
-        data.append('price', formData.price);
-        data.append('stock', formData.stock);
-        data.append('category', formData.category);
-        
-        // Gửi trường rỗng để BE hiểu đây là phụ kiện
-        data.append('breed', '');
-        data.append('age', '');
-        
-        formData.images.forEach((file) => data.append('images', file));
-
         await api.post('/pets', data);
         toast.success('Đăng bán phụ kiện thành công!');
       }
@@ -171,7 +160,6 @@ const SellerAccessories = () => {
 
   const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
-  // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = displayedProducts.slice(indexOfFirstItem, indexOfLastItem);
@@ -188,7 +176,6 @@ const SellerAccessories = () => {
         </div>
         
         <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
-            {/* Search */}
             <div className="relative flex-grow md:flex-grow-0">
                 <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
                 <input 
@@ -200,18 +187,11 @@ const SellerAccessories = () => {
                 />
             </div>
             
-            {/* Sort */}
-            <select 
-                value={sortOption} 
-                onChange={(e) => setSortOption(e.target.value)} 
-                className="px-3 py-2 border rounded-lg text-sm bg-gray-50 focus:outline-none"
-            >
+            <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="px-3 py-2 border rounded-lg text-sm bg-gray-50 focus:outline-none">
                 <option value="newest">Mới nhất</option>
                 <option value="oldest">Cũ nhất</option>
                 <option value="price-asc">Giá tăng dần</option>
                 <option value="price-desc">Giá giảm dần</option>
-                <option value="stock-asc">Tồn kho thấp</option>
-                <option value="stock-desc">Tồn kho cao</option>
             </select>
 
             <button onClick={() => { resetForm(); setShowModal(true); }} className="bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-yellow-600 transition-colors shadow-sm whitespace-nowrap">
@@ -266,7 +246,6 @@ const SellerAccessories = () => {
                 </div>
             )}
             
-            {/* PAGINATION */}
             {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-6 pt-4 border-t border-gray-100">
                     <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="p-2 border rounded hover:bg-gray-50 disabled:opacity-50"><FaAngleLeft /></button>
@@ -277,7 +256,6 @@ const SellerAccessories = () => {
           </div>
       )}
 
-      {/* --- FORM MODAL PHỤ KIỆN --- */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -328,16 +306,16 @@ const SellerAccessories = () => {
                         <textarea name="description" rows="3" required value={formData.description} onChange={handleInputChange} className="w-full border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-primary)]" placeholder="Mô tả về sản phẩm..."></textarea>
                     </div>
 
-                    {!isEditMode && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Hình ảnh (Tối đa 5 ảnh) <span className="text-red-500">*</span></label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 relative transition-colors">
-                                <input type="file" multiple accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"/>
-                                <FaImage className="mx-auto text-gray-400 text-2xl mb-2"/>
-                                <span className="text-sm text-gray-500">Kéo thả hoặc click để tải ảnh lên</span>
-                            </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                             Hình ảnh {isEditMode && <span className="text-gray-400 font-normal">(Chọn ảnh mới để thay thế ảnh cũ)</span>} <span className="text-red-500">*</span>
+                        </label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 relative transition-colors">
+                            <input type="file" multiple accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"/>
+                            <FaImage className="mx-auto text-gray-400 text-2xl mb-2"/>
+                            <span className="text-sm text-gray-500">Kéo thả hoặc click để tải ảnh lên</span>
                         </div>
-                    )}
+                    </div>
 
                     {previewImages.length > 0 && (
                         <div className="flex gap-2 overflow-x-auto py-2">
