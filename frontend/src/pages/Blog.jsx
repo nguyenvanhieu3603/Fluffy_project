@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
@@ -33,41 +32,46 @@ const Blog = () => {
 
       {loading ? <div className="text-center">Đang tải bài viết...</div> : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post) => (
-            <div key={post._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
-              <Link to={`/blog/${post.slug}`} className="block h-48 overflow-hidden">
-                  <img 
-                      src={post.image} 
-                      alt={post.title} 
-                      className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
-                  />
-              </Link>
-              
-              <div className="p-6 flex flex-col flex-grow">
-                  <div className="flex items-center text-xs text-gray-500 mb-3 gap-4">
-                      <span className="flex items-center gap-1"><FaCalendarAlt /> {new Date(post.createdAt).toLocaleDateString('vi-VN')}</span>
-                      <span className="flex items-center gap-1"><FaUser /> {post.author}</span>
-                  </div>
-                  
-                  <Link to={`/blog/${post.slug}`} className="block mb-3">
-                      <h3 className="text-xl font-bold text-gray-800 hover:text-[var(--color-primary)] line-clamp-2">
-                          {post.title}
-                      </h3>
-                  </Link>
-                  
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
-                      {post.excerpt}
-                  </p>
-                  
-                  <Link 
-                      to={`/blog/${post.slug}`} 
-                      className="inline-flex items-center text-[var(--color-primary)] font-semibold hover:underline mt-auto"
-                  >
-                      Đọc tiếp <FaArrowRight className="ml-2 text-xs" />
-                  </Link>
+          {posts.map((post) => {
+            // --- CẬP NHẬT: Dùng trực tiếp _id để đảm bảo chính xác 100% ---
+            const linkUrl = `/blog/${post._id}`;
+
+            return (
+              <div key={post._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
+                <Link to={linkUrl} className="block h-48 overflow-hidden">
+                    <img 
+                        src={post.image} 
+                        alt={post.title} 
+                        className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
+                    />
+                </Link>
+                
+                <div className="p-6 flex flex-col flex-grow">
+                    <div className="flex items-center text-xs text-gray-500 mb-3 gap-4">
+                        <span className="flex items-center gap-1"><FaCalendarAlt /> {new Date(post.createdAt).toLocaleDateString('vi-VN')}</span>
+                        <span className="flex items-center gap-1"><FaUser /> {post.author}</span>
+                    </div>
+                    
+                    <Link to={linkUrl} className="block mb-3">
+                        <h3 className="text-xl font-bold text-gray-800 hover:text-[var(--color-primary)] line-clamp-2">
+                            {post.title}
+                        </h3>
+                    </Link>
+                    
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
+                        {post.excerpt}
+                    </p>
+                    
+                    <Link 
+                        to={linkUrl} 
+                        className="inline-flex items-center text-[var(--color-primary)] font-semibold hover:underline mt-auto"
+                    >
+                        Đọc tiếp <FaArrowRight className="ml-2 text-xs" />
+                    </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       {!loading && posts.length === 0 && <div className="text-center text-gray-500">Chưa có bài viết nào.</div>}

@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -8,15 +8,22 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Chỉ lấy hàm login, không cần useNavigate ở đây nữa
+  // Vì AuthContext sẽ lo việc chuyển hướng dựa trên Role
   const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Gọi hàm login từ Context
+      // Context sẽ tự động navigate đến dashboard tương ứng
       await login(email, password);
-      navigate('/');
+      
+      // QUAN TRỌNG: Đã xóa dòng navigate('/') ở đây
     } catch (error) {
+      // Lưu ý: Nếu AuthContext đã catch lỗi thì dòng này có thể không chạy, 
+      // nhưng giữ lại để dự phòng trường hợp AuthContext throw lỗi ra.
       toast.error(error.response?.data?.message || 'Đăng nhập thất bại');
     }
   };

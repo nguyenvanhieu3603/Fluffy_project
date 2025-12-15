@@ -6,6 +6,7 @@ node_modules/
 # Chặn file môi trường (Quan trọng: Chứa mật khẩu DB)
 .env
 .env.*
+vnpayConfig.js
 
 # Logs lỗi
 npm-debug.log*

@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
         }
       }
       
-      // QUAN TRỌNG: Dù thành công hay thất bại, cũng phải tắt Loading
+
       setLoading(false);
     };
 
@@ -41,15 +41,15 @@ export const AuthProvider = ({ children }) => {
       setUser(data);
       toast.success(`Chào mừng ${data.fullName}!`);
       
-      // --- LOGIC CHUYỂN HƯỚNG MỚI ---
+      // --- LOGIC CHUYỂN HƯỚNG SAU KHI ĐĂNG NHẬP ---
       if (data.role === 'admin') {
-          navigate('/admin/dashboard'); // Admin vào thẳng Dashboard
+          navigate('/admin/dashboard'); // Admin vào Dashboard quản trị
       } else if (data.role === 'seller') {
-          navigate('/seller/dashboard'); // Seller vào trang đơn hàng (hoặc dashboard)
+          navigate('/seller/dashboard'); // Seller vào Kênh người bán
       } else {
-          navigate('/'); // Khách về trang chủ
+          navigate('/'); // Khách hàng về trang chủ
       }
-      // -------------------------------
+      // --------------------------------------------
 
       return data;
     } catch (error) {

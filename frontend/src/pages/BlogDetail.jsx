@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
@@ -14,7 +13,7 @@ const BlogDetail = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            // 1. Lấy chi tiết bài viết
+            // 1. Lấy chi tiết bài viết (Sử dụng id từ URL)
             const { data: blogData } = await api.get(`/blogs/${id}`);
             setPost(blogData);
 
@@ -81,7 +80,8 @@ const BlogDetail = () => {
                       <h4 className="font-bold text-gray-800 mb-4 uppercase text-sm tracking-wide border-b pb-2">Bài viết khác</h4>
                       <div className="space-y-4">
                           {recentPosts.map(other => (
-                              <Link key={other._id} to={`/blog/${other.slug}`} className="block group">
+                              // --- CẬP NHẬT: Dùng _id cho link sidebar ---
+                              <Link key={other._id} to={`/blog/${other._id}`} className="block group">
                                   <div className="h-24 overflow-hidden rounded-lg mb-2">
                                       <img src={other.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform"/>
                                   </div>

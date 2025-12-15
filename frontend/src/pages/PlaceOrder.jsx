@@ -4,7 +4,7 @@ import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import api from '../services/api';
-import { FaMapMarkerAlt, FaPhone, FaUser, FaBoxOpen } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaPhone, FaUser, FaBoxOpen, FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
 
 const PlaceOrder = () => {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ const PlaceOrder = () => {
   const { user } = useContext(AuthContext);
 
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('COD'); // Mặc định là COD
 
   // Lấy thông tin giao hàng từ LocalStorage
   const shippingInfo = JSON.parse(localStorage.getItem('shippingInfo'));
@@ -34,7 +35,7 @@ const PlaceOrder = () => {
   const placeOrderHandler = async () => {
     setLoading(true);
     try {
-      // Map dữ liệu từ CartItems sang chuẩn OrderItems của Backend
+      // 1. Map dữ liệu từ CartItems sang chuẩn OrderItems của Backend
       const orderItemsParams = cartItems.map(item => ({
         name: item.name,
         quantity: item.qty,
@@ -42,27 +43,44 @@ const PlaceOrder = () => {
         price: item.price,
         pet: item._id,
         totalItemPrice: item.price * item.qty,
-        // --- QUAN TRỌNG: THÊM DÒNG NÀY ---
-        // Lấy ID seller từ object seller trong cartItem
         seller: item.seller?._id || item.seller 
       }));
 
       const orderData = {
         orderItems: orderItemsParams,
         shippingInfo: shippingInfo,
-        paymentMethod: 'COD',
+        paymentMethod: paymentMethod, // Sử dụng phương thức đã chọn
         itemsPrice: itemsPrice,
         shippingPrice: shippingPrice,
         totalPrice: totalPrice,
       };
 
-      const { data } = await api.post('/orders', orderData);
-      
-      toast.success('Đặt hàng thành công!');
-      clearCart(); // Xóa giỏ hàng
-      navigate('/my-orders'); // Chuyển về trang danh sách đơn hàng
+      // 2. Tạo đơn hàng trước (Dù thanh toán kiểu gì cũng phải có đơn hàng lưu vào DB)
+      const { data: order } = await api.post('/orders', orderData);
+
+      // 3. Xử lý thanh toán
+      if (paymentMethod === 'VNPAY') {
+          // Gọi API lấy link thanh toán
+          const { data: paymentData } = await api.post('/payment/create_payment_url', {
+              orderId: order._id,
+              amount: totalPrice,
+              bankCode: '' // Để trống để chọn tại VNPAY
+          });
+          
+          // Xóa giỏ hàng trước khi chuyển đi (hoặc xóa sau khi thanh toán thành công tùy logic của bạn)
+          clearCart(); 
+          
+          // Chuyển hướng người dùng sang VNPAY
+          window.location.href = paymentData.paymentUrl;
+      } else {
+          // Nếu là COD
+          toast.success('Đặt hàng thành công!');
+          clearCart(); // Xóa giỏ hàng
+          navigate(`/order/${order._id}`); // Chuyển đến trang chi tiết đơn hàng
+      }
+
     } catch (error) {
-      console.error(error); // Log lỗi ra console để dễ debug
+      console.error(error); 
       toast.error(error.response?.data?.message || 'Đặt hàng thất bại');
     } finally {
       setLoading(false);
@@ -132,20 +150,73 @@ const PlaceOrder = () => {
                     </div>
                 </div>
 
+                {/* --- PHƯƠNG THỨC THANH TOÁN --- */}
                 <div className="mt-6">
-                    <div className="mb-4">
-                        <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200">
-                            <input type="radio" checked readOnly className="text-[var(--color-primary)]" />
-                            <span className="font-medium text-gray-700">Thanh toán khi nhận hàng (COD)</span>
+                    <h3 className="font-bold text-gray-700 mb-3">Phương thức thanh toán</h3>
+                    <div className="space-y-3">
+                        
+                        {/* Option 1: COD */}
+                        <label 
+                            className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
+                                paymentMethod === 'COD' 
+                                ? 'border-[var(--color-primary)] bg-yellow-50 shadow-sm' 
+                                : 'border-gray-200 hover:bg-gray-50'
+                            }`}
+                        >
+                            <input 
+                                type="radio" 
+                                name="paymentMethod" 
+                                value="COD" 
+                                checked={paymentMethod === 'COD'}
+                                onChange={(e) => setPaymentMethod(e.target.value)}
+                                className="text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                            />
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                    <FaMoneyBillWave />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-gray-700 text-sm">Thanh toán khi nhận hàng</p>
+                                    <p className="text-xs text-gray-500">COD (Tiền mặt)</p>
+                                </div>
+                            </div>
                         </label>
+
+                        {/* Option 2: VNPAY */}
+                        <label 
+                            className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
+                                paymentMethod === 'VNPAY' 
+                                ? 'border-[var(--color-primary)] bg-yellow-50 shadow-sm' 
+                                : 'border-gray-200 hover:bg-gray-50'
+                            }`}
+                        >
+                            <input 
+                                type="radio" 
+                                name="paymentMethod" 
+                                value="VNPAY" 
+                                checked={paymentMethod === 'VNPAY'}
+                                onChange={(e) => setPaymentMethod(e.target.value)}
+                                className="text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                            />
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <FaCreditCard />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-gray-700 text-sm">Thanh toán qua VNPAY</p>
+                                    <p className="text-xs text-gray-500">ATM / QR / Internet Banking</p>
+                                </div>
+                            </div>
+                        </label>
+
                     </div>
 
                     <button 
                         onClick={placeOrderHandler}
                         disabled={loading}
-                        className={`w-full bg-[var(--color-primary)] text-white py-3 rounded-lg font-bold shadow-lg hover:bg-yellow-600 transition-colors uppercase tracking-wide ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        className={`w-full bg-[var(--color-primary)] text-white py-3 rounded-lg font-bold shadow-lg hover:bg-yellow-600 transition-colors uppercase tracking-wide mt-6 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                        {loading ? 'Đang xử lý...' : 'Đặt hàng'}
+                        {loading ? 'Đang xử lý...' : (paymentMethod === 'VNPAY' ? 'Thanh toán ngay' : 'Đặt hàng')}
                     </button>
                 </div>
             </div>

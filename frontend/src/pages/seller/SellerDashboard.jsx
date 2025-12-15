@@ -19,7 +19,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const SellerDashboard = () => {
   const { user } = useContext(AuthContext);
-  const navigate = useNavigate(); // <--- MỚI: Khởi tạo hook
+  const navigate = useNavigate(); 
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalProducts: 0,

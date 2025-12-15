@@ -25,14 +25,26 @@ const addOrderItems = async (req, res) => {
           return res.status(400).json({ message: 'Dữ liệu sản phẩm thiếu thông tin người bán (Seller ID)' });
       }
 
-      // Lấy ID người bán
       const sellerId = firstItem.seller._id || firstItem.seller; 
 
-      // --- KIỂM TRA QUAN TRỌNG: NGƯỜI MUA CÓ PHẢI LÀ NGƯỜI BÁN KHÔNG? ---
       if (req.user._id.toString() === sellerId.toString()) {
           return res.status(400).json({ message: 'Bạn không thể tự đặt mua sản phẩm của chính mình.' });
       }
-      // -------------------------------------------------------------------
+
+      // --- 1. KIỂM TRA & TRỪ TỒN KHO ---
+      for (const item of orderItems) {
+          const product = await Pet.findById(item.pet);
+          if (!product) {
+              return res.status(404).json({ message: `Sản phẩm ${item.name} không tồn tại` });
+          }
+          if (product.stock < item.quantity) {
+              return res.status(400).json({ message: `Sản phẩm ${item.name} đã hết hàng hoặc không đủ số lượng` });
+          }
+          // Trừ kho
+          product.stock = product.stock - item.quantity;
+          await product.save();
+      }
+      // ---------------------------------
 
       const order = new Order({
         orderItems,
@@ -113,10 +125,22 @@ const cancelOrder = async (req, res) => {
       if (order.status !== 'pending') {
           return res.status(400).json({ message: 'Không thể hủy đơn hàng đã được xác nhận hoặc đang giao.' });
       }
+      
       order.status = 'cancelled';
       order.cancelledAt = Date.now();
-      const updatedOrder = await order.save();
-      res.json(updatedOrder);
+      await order.save();
+
+      // --- HOÀN LẠI TỒN KHO KHI HỦY ĐƠN ---
+      for (const item of order.orderItems) {
+          const product = await Pet.findById(item.pet);
+          if (product) {
+              product.stock = product.stock + item.quantity;
+              await product.save();
+          }
+      }
+      // ------------------------------------
+
+      res.json(order);
     } else {
       res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
     }
@@ -138,6 +162,17 @@ const updateOrderStatus = async (req, res) => {
           return res.status(403).json({ message: 'Bạn không có quyền quản lý đơn hàng này' });
       }
 
+      // Nếu Seller hủy đơn, cũng phải hoàn kho
+      if (status === 'cancelled' && order.status !== 'cancelled') {
+          for (const item of order.orderItems) {
+              const product = await Pet.findById(item.pet);
+              if (product) {
+                  product.stock += item.quantity;
+                  await product.save();
+              }
+          }
+      }
+
       order.status = status;
       if (status === 'delivered') {
           order.deliveredAt = Date.now();
@@ -145,9 +180,7 @@ const updateOrderStatus = async (req, res) => {
 
       await order.save();
 
-      // --- SỬA LỖI Ở ĐÂY: Chuyển _id sang String trước khi slice ---
       const orderIdStr = order._id.toString(); 
-      // -------------------------------------------------------------
 
       let title = '';
       let message = '';
@@ -199,8 +232,14 @@ const getSellerStats = async (req, res) => {
     const totalOrders = await Order.countDocuments({ seller: sellerId });
     const totalProducts = await Pet.countDocuments({ seller: sellerId });
     const pendingOrders = await Order.countDocuments({ seller: sellerId, status: 'pending' });
-    const deliveredOrders = await Order.find({ seller: sellerId, status: 'delivered' });
-    const totalRevenue = deliveredOrders.reduce((acc, order) => acc + order.prices.totalPrice, 0);
+    
+    // Lấy cả đơn 'delivered' và 'completed'
+    const revenueOrders = await Order.find({ 
+        seller: sellerId, 
+        status: { $in: ['delivered', 'completed'] } 
+    });
+    
+    const totalRevenue = revenueOrders.reduce((acc, order) => acc + order.prices.totalPrice, 0);
 
     const monthlyRevenue = [];
     const today = new Date();
@@ -209,7 +248,8 @@ const getSellerStats = async (req, res) => {
         const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
         const monthName = `Tháng ${d.getMonth() + 1}`;
         const year = d.getFullYear();
-        const monthOrders = deliveredOrders.filter(order => {
+        
+        const monthOrders = revenueOrders.filter(order => {
             const orderDate = new Date(order.createdAt);
             return orderDate.getMonth() === d.getMonth() && orderDate.getFullYear() === year;
         });
@@ -244,9 +284,7 @@ const confirmReceived = async (req, res) => {
       
       const updatedOrder = await order.save();
 
-      // --- SỬA LỖI Ở ĐÂY NỮA ---
       const orderIdStr = order._id.toString(); 
-      // -------------------------
 
       await Notification.create({
           user: order.seller,

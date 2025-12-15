@@ -21,8 +21,7 @@ app.use(cors({
     credentials: true 
 }));
 
-// --- Cấu hình thư mục tĩnh cho ảnh (QUAN TRỌNG) ---
-// Giúp truy cập: http://localhost:5000/uploads/ten-anh.jpg
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // --- Routes ---
@@ -34,6 +33,10 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/blogs', require('./routes/blogRoutes'));
+
+// --- ROUTE THANH TOÁN MỚI ---
+app.use('/api/payment', require('./routes/paymentRoutes'));
+// ----------------------------
 
 // --- Error Handling ---
 app.use((req, res, next) => {

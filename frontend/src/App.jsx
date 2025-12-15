@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Routes, Route, Outlet, Navigate } from 'react-router-dom'; // Thêm Navigate
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -33,7 +33,6 @@ import SellerLayout from './layouts/SellerLayout';
 import SellerOrders from './pages/seller/SellerOrders';
 import SellerPets from './pages/seller/SellerPets'; 
 import SellerAccessories from './pages/seller/SellerAccessories'; 
-
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProductApprove from './pages/admin/AdminProductApprove';
@@ -84,20 +83,16 @@ function App() {
             <Route path="/order/:id" element={<OrderDetail />} />
             <Route path="/profile" element={<Profile />} /> 
             <Route path="/pets" element={<Pets />} /> 
-            <Route path="/help" element={<Help />} />
-            
+            <Route path="/help" element={<Help />} />         
             <Route path="/accessories" element={<Accessories />} /> 
-
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<BlogDetail />} />
             <Route path="/contact" element={<Contact />} />
-
             <Route path="/shop/:id" element={<ShopProfile />} />
-
             <Route path="/seller" element={<SellerLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<SellerDashboard />} /> 
                 <Route path="orders" element={<SellerOrders />} />
-                {/* Thay thế route cũ "products" bằng 2 route mới */}
                 <Route path="pets" element={<SellerPets />} />
                 <Route path="accessories" element={<SellerAccessories />} />
             </Route>
@@ -105,19 +100,17 @@ function App() {
 
         {/* --- NHÓM 2: ADMIN --- */}
         <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="approve-products" element={<AdminProductApprove />} />
-            <Route path="approve-sellers" element={<AdminSellerApprove />} />
-            
+            <Route path="approve-sellers" element={<AdminSellerApprove />} />           
             <Route path="categories" element={<AdminCategories />} />
             <Route path="coupons" element={<AdminCoupons />} />
-
             <Route path="sellers" element={<AdminSellers />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="pets" element={<AdminPets />} />
             <Route path="accessories" element={<AdminAccessories />} /> 
-
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="blogs" element={<AdminBlogs />} />
