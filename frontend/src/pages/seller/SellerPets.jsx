@@ -24,7 +24,7 @@ const SellerPets = () => {
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', stock: 1, category: '',
     age: '', gender: 'Đực', breed: '', 
-    weight: '', length: '', color: '', // --- CẬP NHẬT: Thêm color ---
+    weight: '', length: '', color: '', 
     images: [] 
   });
   const [previewImages, setPreviewImages] = useState([]);
@@ -36,7 +36,6 @@ const SellerPets = () => {
     fetchCategories();
   }, []);
 
-  // Logic lọc danh mục con (Chỉ lấy danh mục Thú cưng)
   useEffect(() => {
       if (parentGroup) {
           const subs = allCategories.filter(c => c.parentId === parentGroup || c.parentId?._id === parentGroup);
@@ -46,7 +45,7 @@ const SellerPets = () => {
       }
   }, [parentGroup, allCategories]);
 
-  // --- LOGIC LỌC & SẮP XẾP ---
+  // --- LOGIC LỌC (CLIENT SIDE) ---
   useEffect(() => {
       let result = [...pets];
 
@@ -58,7 +57,7 @@ const SellerPets = () => {
           const lowerTerm = searchTerm.toLowerCase();
           result = result.filter(p => 
               p.name.toLowerCase().includes(lowerTerm) || 
-              (p.color && p.color.toLowerCase().includes(lowerTerm)) // --- MỚI: Tìm theo màu ---
+              (p.color && p.color.toLowerCase().includes(lowerTerm))
           );
       }
 
@@ -94,7 +93,6 @@ const SellerPets = () => {
       return allCategories.filter(c => c.parentId === root._id || c.parentId?._id === root._id);
   };
 
-  // --- Form Handlers ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -142,7 +140,7 @@ const SellerPets = () => {
       data.append('breed', breedName);
       data.append('weight', formData.weight);
       data.append('length', formData.length);
-      data.append('color', formData.color); // --- Gửi màu sắc lên ---
+      data.append('color', formData.color); 
       
       if (certFile) data.append('certification', certFile);
       
@@ -179,7 +177,7 @@ const SellerPets = () => {
       setFormData({
           name: pet.name, description: pet.description, price: pet.price, stock: pet.stock, category: pet.category._id,
           age: pet.age || '', gender: pet.gender || 'Đực', breed: pet.breed || '', 
-          weight: pet.weight || '', length: pet.length || '', color: pet.color || '', // --- Set màu ---
+          weight: pet.weight || '', length: pet.length || '', color: pet.color || '', 
           images: []
       });
       setPreviewImages(pet.images || []);
@@ -251,7 +249,7 @@ const SellerPets = () => {
                             key={pet._id} 
                             className={`transition-colors ${
                                 pet.stock === 1 
-                                ? 'bg-red-50 border-l-4 border-red-500' // Nền đỏ nhạt, viền trái đỏ đậm khi còn 1
+                                ? 'bg-red-50 border-l-4 border-red-500' // Nền đỏ khi còn 1
                                 : 'hover:bg-gray-50'
                             }`}
                         >
@@ -264,7 +262,8 @@ const SellerPets = () => {
                                 <div className="space-y-1 text-xs text-gray-600">
                                     <p>Giống: <span className="font-medium">{pet.breed}</span></p>
                                     <p>Tuổi: {pet.age} | {pet.gender}</p>
-                                    {pet.color && <p>Màu: {pet.color}</p>} {/* Hiển thị màu sắc */}
+                                    {/* Hiển thị màu sắc */}
+                                    {pet.color && <p>Màu: {pet.color}</p>}
                                     <p>Cân nặng: {pet.weight || '--'} | Dài: {pet.length || '--'}</p>
                                 </div>
                             </td>

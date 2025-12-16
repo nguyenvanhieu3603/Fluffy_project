@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { CartContext } from '../context/CartContext'; 
 import { AuthContext } from '../context/AuthContext';
 import ReviewSection from '../components/ReviewSection'; 
-import CustomerChat from '../components/CustomerChat'; // [MỚI] Import Chat Component
+import CustomerChat from '../components/CustomerChat'; // Import Chat Component
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -127,15 +127,18 @@ const ProductDetail = () => {
                         <div className="text-gray-500">Giới tính:</div>
                         <div className="font-medium text-gray-900">{pet.gender}</div>
 
+                        {pet.color && (
+                            <>
+                                <div className="text-gray-500">Màu sắc:</div>
+                                <div className="font-medium text-gray-900">{pet.color}</div>
+                            </>
+                        )}
                       
                         <div className="text-gray-500">Cân nặng:</div>
                         <div className="font-medium text-gray-900 flex items-center gap-1">{pet.weight || 'Chưa cập nhật'}</div>
 
                         <div className="text-gray-500">Chiều dài:</div>
                         <div className="font-medium text-gray-900 flex items-center gap-1">{pet.length || 'Chưa cập nhật'}</div>
-
-                        <div className="text-gray-500">Màu sắc:</div>
-                        <div className="font-medium text-gray-900">{pet.color}</div>
                     </>
                 )}
 
@@ -204,7 +207,7 @@ const ProductDetail = () => {
 
       <ReviewSection productId={id} />
       
-      {/* [MỚI] HIỂN THỊ NÚT CHAT VỚI NGƯỜI BÁN */}
+      {/* HIỂN THỊ NÚT CHAT VỚI NGƯỜI BÁN */}
       {/* Chỉ hiện khi người xem không phải là chủ shop */}
       {!isOwner && pet.seller && (
           <CustomerChat sellerId={pet.seller._id || pet.seller} />

@@ -29,7 +29,7 @@ const petSchema = new mongoose.Schema({
     min: 0
   },
   images: [{
-    type: String, // Lưu URL ảnh từ Cloudinary
+    type: String, // Lưu URL ảnh từ Cloudinary/Local
     required: true
   }],
   stock: {
@@ -47,20 +47,17 @@ const petSchema = new mongoose.Schema({
     ref: 'User', // Liên kết với người bán
     required: true
   },
-  // Các thông tin đặc thù của thú cưng
+  
+  // --- THÔNG TIN ĐẶC THÙ CỦA THÚ CƯNG ---
   age: { type: String },
   gender: { 
     type: String, 
     enum: ['Đực', 'Cái', 'Không xác định'] 
   },
   breed: { type: String },
-  
-  // --- CẬP NHẬT: Thêm trường màu sắc ---
-  color: { type: String }, 
-  // ------------------------------------
-  
-  weight: { type: String }, 
-  length: { type: String }, 
+  color: { type: String, trim: true }, // Mới: Màu sắc
+  weight: { type: String },            // Mới: Cân nặng
+  length: { type: String },            // Mới: Chiều dài
   
   // Phân loại Pet/Accessory
   type: {
@@ -76,7 +73,7 @@ const petSchema = new mongoose.Schema({
   healthStatus: {
     type: String,
     enum: ['pending', 'approved', 'rejected', 'not_required'],
-    default: 'pending' // Mặc định chờ Admin duyệt giấy tờ
+    default: 'pending' 
   },
   verifiedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -100,7 +97,7 @@ const petSchema = new mongoose.Schema({
 // Index để lọc sản phẩm nhanh hơn
 petSchema.index({ category: 1, status: 1 });
 petSchema.index({ 'location.city': 1 });
-petSchema.index({ color: 1 }); 
+petSchema.index({ name: 'text', color: 'text' }); // Index tìm kiếm text
 
 const Pet = mongoose.model('Pet', petSchema);
 

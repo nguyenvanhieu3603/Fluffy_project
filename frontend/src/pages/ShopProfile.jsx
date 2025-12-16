@@ -79,16 +79,14 @@ const ShopProfile = () => {
   const handleFilterChange = (setter, value) => {
       setter(value);
       setPage(1);
-      // Nếu đổi tab chính (Pet/Accessory) thì nên reset category filter con để tránh conflict logic (tuỳ chọn)
+      // Nếu đổi tab chính (Pet/Accessory) thì nên reset category filter con để tránh conflict logic
       if (setter === setActiveTab) setSelectedCategory('');
   };
 
   // Helper để lọc danh mục hiển thị trong dropdown dựa theo Tab đang chọn
   const getFilteredCategories = () => {
       if (activeTab === 'all') return categories;
-      // Giả sử backend hoặc logic danh mục có slug hoặc parentId để phân biệt
-      // Ở đây ta lọc đơn giản theo slug cha nếu có, hoặc hiển thị hết nếu ko phân biệt được ở client
-      // Cách tốt nhất: Lọc theo slug cha 'thu-cung' hoặc 'phu-kien'
+      
       if (activeTab === 'pet') {
           const petRoot = categories.find(c => c.slug === 'thu-cung');
           return categories.filter(c => c.parentId === petRoot?._id || c.parentId?._id === petRoot?._id);

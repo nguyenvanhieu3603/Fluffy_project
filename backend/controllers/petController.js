@@ -2,7 +2,7 @@ const Pet = require('../models/petModel');
 const Category = require('../models/categoryModel'); 
 const User = require('../models/userModel');
 
-// @desc    Lấy danh sách thú cưng
+// @desc    Lấy danh sách thú cưng (Lọc, Tìm kiếm, Phân trang, Sắp xếp)
 const getPets = async (req, res) => {
   try {
     const pageSize = 12;
@@ -15,12 +15,12 @@ const getPets = async (req, res) => {
         keyword = {
             $or: [
                 { name: regex },
-                { color: regex } // Thêm tìm kiếm theo màu
+                { color: regex } // Tìm kiếm theo màu sắc
             ]
         };
     }
 
-    // 2. Xử lý Lọc Danh mục
+    // 2. Xử lý Lọc Danh mục (Hỗ trợ lọc theo nhiều ID hoặc ID cha)
     let categoryFilter = {};
     if (req.query.category) {
         const ids = req.query.category.split(',');
@@ -30,6 +30,7 @@ const getPets = async (req, res) => {
             try {
                 const currentCat = await Category.findById(ids[0]);
                 if (currentCat) {
+                    // Lấy danh mục con nếu là danh mục cha
                     const level2Cats = await Category.find({ parentId: currentCat._id });
                     const level2Ids = level2Cats.map(c => c._id);
                     const level3Cats = await Category.find({ parentId: { $in: level2Ids } });
@@ -53,13 +54,12 @@ const getPets = async (req, res) => {
         if (req.query.maxPrice) priceFilter.price.$lte = Number(req.query.maxPrice);
     }
 
+    // 4. Các bộ lọc khác
+    const sellerFilter = req.query.seller ? { seller: req.query.seller } : {}; // Lọc theo người bán
     const typeFilter = req.query.type ? { type: req.query.type } : {};
     const genderFilter = req.query.gender ? { gender: req.query.gender } : {};
     const breedFilter = req.query.breed ? { breed: { $regex: req.query.breed, $options: 'i' } } : {};
-    
-    // Nếu muốn lọc chính xác theo màu (ngoài thanh tìm kiếm)
     const colorFilter = req.query.color ? { color: { $regex: req.query.color, $options: 'i' } } : {};
-    
     const locationFilter = req.query.city ? { 'location.city': { $regex: req.query.city, $options: 'i' } } : {};
 
     const baseCondition = { 
@@ -71,6 +71,7 @@ const getPets = async (req, res) => {
         ...keyword,
         ...categoryFilter,
         ...priceFilter,
+        ...sellerFilter, // Thêm lọc theo seller
         ...typeFilter,
         ...genderFilter,
         ...breedFilter,
@@ -78,6 +79,7 @@ const getPets = async (req, res) => {
         ...locationFilter
     };
 
+    // 5. Sắp xếp
     let sortOption = { createdAt: -1 };
     if (req.query.sort) {
         switch (req.query.sort) {
@@ -130,7 +132,6 @@ const getPetById = async (req, res) => {
 // @desc    Tạo thú cưng mới (Seller)
 const createPet = async (req, res) => {
   try {
-    // Nhận thêm trường color
     const { name, description, price, category, stock, type, age, gender, breed, weight, length, color } = req.body;
     const imageFiles = req.files && req.files['images'] ? req.files['images'] : [];
     
@@ -168,8 +169,7 @@ const createPet = async (req, res) => {
       seller: req.user._id,
       images: imageUrls,
       age, gender, breed,
-      weight, length, 
-      color, // Lưu màu sắc
+      weight, length, color, // Lưu các thuộc tính mới
       location: { city, district },
       healthInfo,
       healthStatus, 
@@ -194,6 +194,7 @@ const updatePet = async (req, res) => {
           return res.status(403).json({ message: 'Bạn không có quyền sửa sản phẩm này' });
       }
 
+      // --- CẬP NHẬT THÔNG TIN ---
       pet.name = name || pet.name;
       pet.description = description || pet.description;
       pet.price = price || pet.price;
@@ -205,18 +206,20 @@ const updatePet = async (req, res) => {
           if (gender) pet.gender = gender;
           if (weight) pet.weight = weight;
           if (length) pet.length = length;
-          if (color) pet.color = color; // Cập nhật màu sắc
+          if (color) pet.color = color;
       }
 
+      // Update ảnh
       if (req.files && req.files['images'] && req.files['images'].length > 0) {
           const imageFiles = req.files['images'];
           pet.images = imageFiles.map(file => `/uploads/${file.filename}`);
       }
 
+      // Update giấy tờ
       if (pet.type === 'pet' && req.files && req.files['certification']) {
           const certFile = req.files['certification'][0];
           pet.healthInfo.vaccinationCertificate = `/uploads/${certFile.filename}`;
-          pet.healthStatus = 'pending'; 
+          pet.healthStatus = 'pending'; // Reset trạng thái duyệt
       }
 
       const updatedPet = await pet.save();
