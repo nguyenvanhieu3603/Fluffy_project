@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
-import { FaPlus, FaEdit, FaTrash, FaTimes, FaPaw, FaImage, FaFileMedical, FaSearch, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaTimes, FaPaw, FaImage, FaFileMedical, FaSearch } from 'react-icons/fa';
 
 const SellerPets = () => {
   const [pets, setPets] = useState([]);
@@ -9,21 +9,22 @@ const SellerPets = () => {
   const [allCategories, setAllCategories] = useState([]); 
   const [loading, setLoading] = useState(true);
   
+  // Filter & Pagination States
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('newest');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
 
+  // Modal States
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  // Form States
   const [parentGroup, setParentGroup] = useState(''); 
   const [filteredSubCats, setFilteredSubCats] = useState([]); 
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', stock: 1, category: '',
     age: '', gender: 'Đực', breed: '', 
-    weight: '', length: '',
+    weight: '', length: '', color: '', // --- CẬP NHẬT: Thêm color ---
     images: [] 
   });
   const [previewImages, setPreviewImages] = useState([]);
@@ -35,6 +36,7 @@ const SellerPets = () => {
     fetchCategories();
   }, []);
 
+  // Logic lọc danh mục con (Chỉ lấy danh mục Thú cưng)
   useEffect(() => {
       if (parentGroup) {
           const subs = allCategories.filter(c => c.parentId === parentGroup || c.parentId?._id === parentGroup);
@@ -44,21 +46,30 @@ const SellerPets = () => {
       }
   }, [parentGroup, allCategories]);
 
+  // --- LOGIC LỌC & SẮP XẾP ---
   useEffect(() => {
       let result = [...pets];
-      // Lọc theo type = pet
-      result = result.filter(p => p.type === 'pet');
 
+      // 1. Chỉ lấy Thú cưng
+      result = result.filter(p => p.type === 'pet' || p.breed);
+
+      // 2. Tìm kiếm (Tên hoặc Màu sắc)
       if (searchTerm) {
-          result = result.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+          const lowerTerm = searchTerm.toLowerCase();
+          result = result.filter(p => 
+              p.name.toLowerCase().includes(lowerTerm) || 
+              (p.color && p.color.toLowerCase().includes(lowerTerm)) // --- MỚI: Tìm theo màu ---
+          );
       }
 
+      // 3. Sắp xếp
       switch(sortOption) {
           case 'newest': result.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)); break;
           case 'oldest': result.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt)); break;
           case 'price-asc': result.sort((a,b) => a.price - b.price); break;
           case 'price-desc': result.sort((a,b) => b.price - a.price); break;
       }
+
       setDisplayedPets(result);
   }, [pets, searchTerm, sortOption]);
 
@@ -83,6 +94,7 @@ const SellerPets = () => {
       return allCategories.filter(c => c.parentId === root._id || c.parentId?._id === root._id);
   };
 
+  // --- Form Handlers ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -123,16 +135,14 @@ const SellerPets = () => {
       data.append('stock', formData.stock);
       data.append('category', formData.category);
       data.append('status', 'available'); 
-
-      // --- QUAN TRỌNG: GỬI TYPE LÊN ---
       data.append('type', 'pet'); 
-      // -------------------------------
 
       data.append('age', formData.age);
       data.append('gender', formData.gender);
       data.append('breed', breedName);
       data.append('weight', formData.weight);
       data.append('length', formData.length);
+      data.append('color', formData.color); // --- Gửi màu sắc lên ---
       
       if (certFile) data.append('certification', certFile);
       
@@ -152,7 +162,6 @@ const SellerPets = () => {
       resetForm();
       fetchMyPets();
     } catch (error) {
-      console.error(error);
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
     }
   };
@@ -170,8 +179,8 @@ const SellerPets = () => {
       setFormData({
           name: pet.name, description: pet.description, price: pet.price, stock: pet.stock, category: pet.category._id,
           age: pet.age || '', gender: pet.gender || 'Đực', breed: pet.breed || '', 
-          weight: pet.weight || '', length: pet.length || '',
-          images: [] // Reset mảng file upload
+          weight: pet.weight || '', length: pet.length || '', color: pet.color || '', // --- Set màu ---
+          images: []
       });
       setPreviewImages(pet.images || []);
       setCertFile(null); 
@@ -182,7 +191,7 @@ const SellerPets = () => {
   const resetForm = () => {
       setFormData({
         name: '', description: '', price: '', stock: 1, category: '',
-        age: '', gender: 'Đực', breed: '', weight: '', length: '',
+        age: '', gender: 'Đực', breed: '', weight: '', length: '', color: '',
         images: []
       });
       setPreviewImages([]);
@@ -194,14 +203,9 @@ const SellerPets = () => {
 
   const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = displayedPets.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(displayedPets.length / itemsPerPage);
-
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[600px] flex flex-col">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="flex justify-between items-center mb-6">
         <div>
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                 <FaPaw className="text-[var(--color-primary)]"/> Quản lý Thú cưng
@@ -209,24 +213,18 @@ const SellerPets = () => {
             <p className="text-gray-500 text-sm mt-1">Tổng: <b>{displayedPets.length}</b> bé thú cưng</p>
         </div>
         
-        <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
-            <div className="relative flex-grow md:flex-grow-0">
+        <div className="flex gap-3 items-center">
+            {/* Search Box */}
+            <div className="relative">
                 <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
                 <input 
                     type="text" 
-                    placeholder="Tìm tên thú cưng..." 
+                    placeholder="Tìm tên hoặc màu sắc..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] w-full md:w-56"
+                    className="pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] w-64"
                 />
             </div>
-            
-            <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} className="px-3 py-2 border rounded-lg text-sm bg-gray-50 focus:outline-none">
-                <option value="newest">Mới nhất</option>
-                <option value="oldest">Cũ nhất</option>
-                <option value="price-asc">Giá tăng dần</option>
-                <option value="price-desc">Giá giảm dần</option>
-            </select>
 
             <button onClick={() => { resetForm(); setShowModal(true); }} className="bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-yellow-600 transition-colors shadow-sm whitespace-nowrap">
                 <FaPlus /> Đăng mới
@@ -235,73 +233,73 @@ const SellerPets = () => {
       </div>
 
       {loading ? <div className="text-center py-12">Đang tải dữ liệu...</div> : (
-          <div className="flex-grow">
-            <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-gray-50 text-gray-600 text-xs font-bold uppercase tracking-wider">
-                            <th className="p-4 border-b w-[80px]">Ảnh</th>
-                            <th className="p-4 border-b">Tên thú cưng</th>
-                            <th className="p-4 border-b">Thông tin chi tiết</th>
-                            <th className="p-4 border-b w-[150px]">Giá & Kho</th>
-                            <th className="p-4 border-b w-[120px]">Sức khỏe</th>
-                            <th className="p-4 border-b w-[100px]">Hành động</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+                <thead>
+                    <tr className="bg-gray-50 text-gray-600 text-xs font-bold uppercase tracking-wider">
+                        <th className="p-4 border-b w-[80px]">Ảnh</th>
+                        <th className="p-4 border-b">Tên thú cưng</th>
+                        <th className="p-4 border-b">Thông tin chi tiết</th>
+                        <th className="p-4 border-b w-[150px]">Giá & Kho</th>
+                        <th className="p-4 border-b w-[120px]">Sức khỏe</th>
+                        <th className="p-4 border-b w-[100px]">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-sm">
+                    {displayedPets.map(pet => (
+                        <tr 
+                            key={pet._id} 
+                            className={`transition-colors ${
+                                pet.stock === 1 
+                                ? 'bg-red-50 border-l-4 border-red-500' // Nền đỏ nhạt, viền trái đỏ đậm khi còn 1
+                                : 'hover:bg-gray-50'
+                            }`}
+                        >
+                            <td className="p-4"><img src={pet.images[0]} alt={pet.name} className="w-12 h-12 rounded object-cover border bg-white"/></td>
+                            <td className="p-4">
+                                <div className="font-medium text-gray-800 max-w-xs truncate" title={pet.name}>{pet.name}</div>
+                                <div className="text-xs text-gray-500 mt-1">{pet.category?.name || 'Chưa phân loại'}</div>
+                            </td>
+                            <td className="p-4">
+                                <div className="space-y-1 text-xs text-gray-600">
+                                    <p>Giống: <span className="font-medium">{pet.breed}</span></p>
+                                    <p>Tuổi: {pet.age} | {pet.gender}</p>
+                                    {pet.color && <p>Màu: {pet.color}</p>} {/* Hiển thị màu sắc */}
+                                    <p>Cân nặng: {pet.weight || '--'} | Dài: {pet.length || '--'}</p>
+                                </div>
+                            </td>
+                            <td className="p-4">
+                                <div className="font-bold text-[var(--color-primary)]">{formatPrice(pet.price)}</div>
+                                
+                                <div className={`text-xs mt-1 inline-block px-2 py-0.5 rounded ${pet.stock === 1 ? 'bg-red-600 text-white font-bold' : (pet.stock === 0 ? 'text-gray-400' : 'text-gray-500')}`}>
+                                    Kho: {pet.stock} {pet.stock === 1 && '(Sắp hết)'} {pet.stock === 0 && '(Hết hàng)'}
+                                </div>
+                            </td>
+                            <td className="p-4">
+                                {pet.healthStatus === 'pending' 
+                                    ? <span className="text-yellow-700 bg-yellow-100 px-2 py-1 rounded text-[10px] font-bold uppercase">Chờ duyệt</span> 
+                                    : <span className="text-green-700 bg-green-100 px-2 py-1 rounded text-[10px] font-bold uppercase">Đã duyệt</span>
+                                }
+                            </td>
+                            <td className="p-4 flex gap-2">
+                                <button onClick={() => openEditModal(pet)} className="text-blue-500 hover:bg-blue-50 p-2 rounded transition-colors"><FaEdit /></button>
+                                <button onClick={() => handleDelete(pet._id)} className="text-red-500 hover:bg-red-50 p-2 rounded transition-colors"><FaTrash /></button>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 text-sm">
-                        {currentItems.map(pet => (
-                            <tr key={pet._id} className="hover:bg-gray-50 transition-colors">
-                                <td className="p-4"><img src={pet.images[0]} alt={pet.name} className="w-12 h-12 rounded object-cover border bg-gray-100"/></td>
-                                <td className="p-4">
-                                    <div className="font-medium text-gray-800 max-w-xs truncate" title={pet.name}>{pet.name}</div>
-                                    <div className="text-xs text-gray-500 mt-1">{pet.category?.name || 'Chưa phân loại'}</div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="space-y-1 text-xs text-gray-600">
-                                        <p>Giống: <span className="font-medium">{pet.breed}</span></p>
-                                        <p>Tuổi: {pet.age} | {pet.gender}</p>
-                                        <p>Cân nặng: {pet.weight || '--'} | Dài: {pet.length || '--'}</p>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="font-bold text-[var(--color-primary)]">{formatPrice(pet.price)}</div>
-                                    <div className={`text-xs mt-1 ${pet.stock < 2 ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
-                                        Kho: {pet.stock}
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    {pet.healthStatus === 'pending' 
-                                        ? <span className="text-yellow-700 bg-yellow-100 px-2 py-1 rounded text-[10px] font-bold uppercase">Chờ duyệt</span> 
-                                        : <span className="text-green-700 bg-green-100 px-2 py-1 rounded text-[10px] font-bold uppercase">Đã duyệt</span>
-                                    }
-                                </td>
-                                <td className="p-4 flex gap-2">
-                                    <button onClick={() => openEditModal(pet)} className="text-blue-500 hover:bg-blue-50 p-2 rounded transition-colors"><FaEdit /></button>
-                                    <button onClick={() => handleDelete(pet._id)} className="text-red-500 hover:bg-red-50 p-2 rounded transition-colors"><FaTrash /></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                    ))}
+                </tbody>
+            </table>
             
-            {currentItems.length === 0 && (
+            {displayedPets.length === 0 && (
                 <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-lg mt-4 border border-dashed border-gray-200">
                     <FaPaw className="mx-auto text-4xl text-gray-300 mb-2"/>
                     <p>Bạn chưa đăng bán thú cưng nào.</p>
                 </div>
             )}
-            
-            {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-6 pt-4 border-t border-gray-100">
-                    <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="p-2 border rounded hover:bg-gray-50 disabled:opacity-50"><FaAngleLeft /></button>
-                    <span className="text-sm font-medium">Trang {currentPage} / {totalPages}</span>
-                    <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="p-2 border rounded hover:bg-gray-50 disabled:opacity-50"><FaAngleRight /></button>
-                </div>
-            )}
           </div>
       )}
 
+      {/* --- FORM MODAL --- */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -368,32 +366,39 @@ const SellerPets = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Chiều dài</label>
                             <input type="text" name="length" value={formData.length} onChange={handleInputChange} className="w-full border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-primary)]" placeholder="VD: 30 cm"/>
                         </div>
-                    </div>
-
-                    <div className="mt-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Giấy chứng nhận sức khỏe {isEditMode ? '(Tùy chọn)' : '<span className="text-red-500">*</span>'}</label>
-                        <div className="border border-gray-300 rounded-lg p-3 flex items-center gap-4 bg-blue-50/50">
-                            <input type="file" accept="image/*" onChange={handleCertChange} className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-                            {certPreview && <img src={certPreview} alt="Cert Preview" className="h-10 w-10 object-cover rounded border"/>}
-                            {!certPreview && <FaFileMedical className="text-gray-400 text-xl"/>}
+                        {/* Input màu sắc */}
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Màu sắc</label>
+                            <input type="text" name="color" value={formData.color} onChange={handleInputChange} className="w-full border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-primary)]" placeholder="VD: Trắng, Nâu vàng, Vện..."/>
                         </div>
                     </div>
+
+                    {!isEditMode && (
+                        <div className="mt-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Giấy chứng nhận sức khỏe <span className="text-red-500">*</span></label>
+                            <div className="border border-gray-300 rounded-lg p-3 flex items-center gap-4 bg-blue-50/50">
+                                <input type="file" accept="image/*" onChange={handleCertChange} className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                                {certPreview && <img src={certPreview} alt="Cert Preview" className="h-10 w-10 object-cover rounded border"/>}
+                                {!certPreview && <FaFileMedical className="text-gray-400 text-xl"/>}
+                            </div>
+                        </div>
+                    )}
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả chi tiết</label>
                         <textarea name="description" rows="3" required value={formData.description} onChange={handleInputChange} className="w-full border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-primary)]" placeholder="Mô tả về tình trạng sức khỏe, tiêm phòng..."></textarea>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Hình ảnh {isEditMode && <span className="text-gray-400 font-normal">(Chọn ảnh mới để thay thế ảnh cũ)</span>} <span className="text-red-500">*</span>
-                        </label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 relative transition-colors">
-                            <input type="file" multiple accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"/>
-                            <FaImage className="mx-auto text-gray-400 text-2xl mb-2"/>
-                            <span className="text-sm text-gray-500">Kéo thả hoặc click để tải ảnh lên</span>
+                    {!isEditMode && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Hình ảnh (Tối đa 5 ảnh) <span className="text-red-500">*</span></label>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 relative transition-colors">
+                                <input type="file" multiple accept="image/*" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"/>
+                                <FaImage className="mx-auto text-gray-400 text-2xl mb-2"/>
+                                <span className="text-sm text-gray-500">Kéo thả hoặc click để tải ảnh lên</span>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {previewImages.length > 0 && (
                         <div className="flex gap-2 overflow-x-auto py-2">

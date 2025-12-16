@@ -31,17 +31,12 @@ const upload = multer({
   }
 });
 
-// @desc    Upload ảnh lên Cloudinary
-// @route   POST /api/upload
-// @access  Public (Hoặc Private tùy bạn)
+
 router.post('/', upload.single('image'), async (req, res) => {
   try {
-    // req.file.path là đường dẫn file tạm multer vừa lưu
     const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'fluffy-petshop', // Tên folder trên Cloudinary
+      folder: 'fluffy-petshop', 
     });
-    
-    // Trả về URL ảnh
     res.json({
       url: result.secure_url,
       public_id: result.public_id

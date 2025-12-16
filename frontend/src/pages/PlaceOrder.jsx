@@ -4,7 +4,7 @@ import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import api from '../services/api';
-import { FaMapMarkerAlt, FaPhone, FaUser, FaBoxOpen, FaMoneyBillWave, FaCreditCard } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaPhone, FaUser, FaBoxOpen, FaMoneyBillWave, FaCreditCard, FaTicketAlt } from 'react-icons/fa';
 
 const PlaceOrder = () => {
   const navigate = useNavigate();
@@ -12,30 +12,56 @@ const PlaceOrder = () => {
   const { user } = useContext(AuthContext);
 
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('COD'); // Mặc định là COD
+  const [paymentMethod, setPaymentMethod] = useState('COD');
+  
+  // --- STATE COUPON ---
+  const [couponCode, setCouponCode] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [couponApplied, setCouponApplied] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
 
-  // Lấy thông tin giao hàng từ LocalStorage
   const shippingInfo = JSON.parse(localStorage.getItem('shippingInfo'));
 
-  // Nếu không có thông tin giao hàng, đuổi về trang nhập
   useEffect(() => {
     if (!shippingInfo) {
       navigate('/shipping');
     }
   }, [shippingInfo, navigate]);
 
-  // Tính toán chi phí
-  const shippingPrice = itemsPrice > 5000000 ? 0 : 30000; // Miễn phí ship nếu đơn > 5tr
-  const totalPrice = itemsPrice + shippingPrice;
+  const shippingPrice = itemsPrice > 5000000 ? 0 : 30000;
+  
+  // Tổng tiền cuối cùng = Tiền hàng + Ship - Giảm giá
+  const totalPrice = Math.max(0, itemsPrice + shippingPrice - discountAmount);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   };
 
+  // --- HÀM KIỂM TRA COUPON ---
+  const applyCouponHandler = async () => {
+      if(!couponCode.trim()) return toast.error('Vui lòng nhập mã giảm giá');
+      setCouponLoading(true);
+      try {
+          const { data } = await api.post('/coupons/validate', {
+              code: couponCode,
+              orderTotal: itemsPrice // Gửi tổng tiền hàng (chưa ship) để check điều kiện
+          });
+          
+          setDiscountAmount(data.discountPrice);
+          setCouponApplied(couponCode);
+          toast.success(`Áp dụng mã thành công! Giảm ${formatPrice(data.discountPrice)}`);
+      } catch (error) {
+          setDiscountAmount(0);
+          setCouponApplied('');
+          toast.error(error.response?.data?.message || 'Mã không hợp lệ');
+      } finally {
+          setCouponLoading(false);
+      }
+  };
+
   const placeOrderHandler = async () => {
     setLoading(true);
     try {
-      // 1. Map dữ liệu từ CartItems sang chuẩn OrderItems của Backend
       const orderItemsParams = cartItems.map(item => ({
         name: item.name,
         quantity: item.qty,
@@ -49,34 +75,30 @@ const PlaceOrder = () => {
       const orderData = {
         orderItems: orderItemsParams,
         shippingInfo: shippingInfo,
-        paymentMethod: paymentMethod, // Sử dụng phương thức đã chọn
+        paymentMethod: paymentMethod,
         itemsPrice: itemsPrice,
         shippingPrice: shippingPrice,
         totalPrice: totalPrice,
+        // Gửi thêm thông tin coupon
+        couponCode: couponApplied, 
+        discountAmount: discountAmount
       };
 
-      // 2. Tạo đơn hàng trước (Dù thanh toán kiểu gì cũng phải có đơn hàng lưu vào DB)
       const { data: order } = await api.post('/orders', orderData);
 
-      // 3. Xử lý thanh toán
       if (paymentMethod === 'VNPAY') {
-          // Gọi API lấy link thanh toán
           const { data: paymentData } = await api.post('/payment/create_payment_url', {
               orderId: order._id,
               amount: totalPrice,
-              bankCode: '' // Để trống để chọn tại VNPAY
+              bankCode: ''
           });
           
-          // Xóa giỏ hàng trước khi chuyển đi (hoặc xóa sau khi thanh toán thành công tùy logic của bạn)
           clearCart(); 
-          
-          // Chuyển hướng người dùng sang VNPAY
           window.location.href = paymentData.paymentUrl;
       } else {
-          // Nếu là COD
           toast.success('Đặt hàng thành công!');
-          clearCart(); // Xóa giỏ hàng
-          navigate(`/order/${order._id}`); // Chuyển đến trang chi tiết đơn hàng
+          clearCart(); 
+          navigate(`/order/${order._id}`);
       }
 
     } catch (error) {
@@ -133,8 +155,30 @@ const PlaceOrder = () => {
         {/* CỘT PHẢI: TỔNG KẾT & THANH TOÁN */}
         <div className="lg:col-span-1">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-24">
-                <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">Đơn hàng</h2>
+                <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">Thanh toán</h2>
                 
+                {/* NHẬP MÃ GIẢM GIÁ */}
+                <div className="mb-6">
+                    <div className="flex gap-2">
+                        <input 
+                            type="text" 
+                            placeholder="Nhập mã giảm giá"
+                            className="flex-1 border rounded-lg px-3 py-2 text-sm uppercase focus:border-[var(--color-primary)] outline-none"
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value)}
+                            disabled={couponApplied}
+                        />
+                        <button 
+                            onClick={couponApplied ? () => { setCouponApplied(''); setDiscountAmount(0); setCouponCode(''); } : applyCouponHandler}
+                            disabled={couponLoading}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold text-white transition-colors ${couponApplied ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-800 hover:bg-gray-700'}`}
+                        >
+                            {couponApplied ? 'Hủy' : 'Áp dụng'}
+                        </button>
+                    </div>
+                    {couponApplied && <p className="text-green-600 text-xs mt-1 flex items-center gap-1"><FaTicketAlt /> Đã áp dụng mã: <b>{couponApplied}</b></p>}
+                </div>
+
                 <div className="space-y-3 text-gray-600 text-sm">
                     <div className="flex justify-between">
                         <span>Tiền hàng:</span>
@@ -144,71 +188,37 @@ const PlaceOrder = () => {
                         <span>Phí vận chuyển:</span>
                         <span>{formatPrice(shippingPrice)}</span>
                     </div>
+                    {/* Hiển thị dòng giảm giá nếu có */}
+                    {discountAmount > 0 && (
+                        <div className="flex justify-between text-green-600 font-medium">
+                            <span>Giảm giá:</span>
+                            <span>- {formatPrice(discountAmount)}</span>
+                        </div>
+                    )}
                     <div className="border-t pt-3 mt-3 flex justify-between text-lg font-bold text-gray-900">
                         <span>Tổng cộng:</span>
                         <span className="text-[var(--color-primary)]">{formatPrice(totalPrice)}</span>
                     </div>
                 </div>
 
-                {/* --- PHƯƠNG THỨC THANH TOÁN --- */}
                 <div className="mt-6">
                     <h3 className="font-bold text-gray-700 mb-3">Phương thức thanh toán</h3>
                     <div className="space-y-3">
-                        
-                        {/* Option 1: COD */}
-                        <label 
-                            className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
-                                paymentMethod === 'COD' 
-                                ? 'border-[var(--color-primary)] bg-yellow-50 shadow-sm' 
-                                : 'border-gray-200 hover:bg-gray-50'
-                            }`}
-                        >
-                            <input 
-                                type="radio" 
-                                name="paymentMethod" 
-                                value="COD" 
-                                checked={paymentMethod === 'COD'}
-                                onChange={(e) => setPaymentMethod(e.target.value)}
-                                className="text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-                            />
+                        <label className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all ${paymentMethod === 'COD' ? 'border-[var(--color-primary)] bg-yellow-50 shadow-sm' : 'border-gray-200 hover:bg-gray-50'}`}>
+                            <input type="radio" name="paymentMethod" value="COD" checked={paymentMethod === 'COD'} onChange={(e) => setPaymentMethod(e.target.value)} className="text-[var(--color-primary)] focus:ring-[var(--color-primary)]"/>
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                    <FaMoneyBillWave />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-gray-700 text-sm">Thanh toán khi nhận hàng</p>
-                                    <p className="text-xs text-gray-500">COD (Tiền mặt)</p>
-                                </div>
+                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><FaMoneyBillWave /></div>
+                                <div><p className="font-bold text-gray-700 text-sm">Thanh toán khi nhận hàng</p><p className="text-xs text-gray-500">COD (Tiền mặt)</p></div>
                             </div>
                         </label>
 
-                        {/* Option 2: VNPAY */}
-                        <label 
-                            className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
-                                paymentMethod === 'VNPAY' 
-                                ? 'border-[var(--color-primary)] bg-yellow-50 shadow-sm' 
-                                : 'border-gray-200 hover:bg-gray-50'
-                            }`}
-                        >
-                            <input 
-                                type="radio" 
-                                name="paymentMethod" 
-                                value="VNPAY" 
-                                checked={paymentMethod === 'VNPAY'}
-                                onChange={(e) => setPaymentMethod(e.target.value)}
-                                className="text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-                            />
+                        <label className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all ${paymentMethod === 'VNPAY' ? 'border-[var(--color-primary)] bg-yellow-50 shadow-sm' : 'border-gray-200 hover:bg-gray-50'}`}>
+                            <input type="radio" name="paymentMethod" value="VNPAY" checked={paymentMethod === 'VNPAY'} onChange={(e) => setPaymentMethod(e.target.value)} className="text-[var(--color-primary)] focus:ring-[var(--color-primary)]"/>
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                    <FaCreditCard />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-gray-700 text-sm">Thanh toán qua VNPAY</p>
-                                    <p className="text-xs text-gray-500">ATM / QR / Internet Banking</p>
-                                </div>
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><FaCreditCard /></div>
+                                <div><p className="font-bold text-gray-700 text-sm">Thanh toán qua VNPAY</p><p className="text-xs text-gray-500">ATM / QR / Internet Banking</p></div>
                             </div>
                         </label>
-
                     </div>
 
                     <button 

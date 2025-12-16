@@ -1,80 +1,73 @@
 const mongoose = require('mongoose');
 
-const sellerInfoSchema = new mongoose.Schema({
-  shopName: { type: String },
-  shopDescription: { type: String },
-  shopLogo: { type: String },
-  shopAddress: { type: String },
-  status: {
-    type: String,
-    enum: ['none', 'pending', 'approved', 'rejected'],
-    default: 'none'
-  }
-}, { _id: false });
 
-// Schema con cho Địa chỉ
 const addressSchema = new mongoose.Schema({
-    fullName: { type: String, required: true },
-    phone: { type: String, required: true },
-    address: { type: String, required: true },
-    isDefault: { type: Boolean, default: false }
+  province: { type: String, default: '' }, // Tỉnh/Thành phố
+  district: { type: String, default: '' }, // Quận/Huyện
+  ward: { type: String, default: '' },     // Phường/Xã
+  specificAddress: { type: String, default: '' }, // Số nhà, tên đường
+  // Giữ lại trường address cũ (nếu cần) để tránh mất dữ liệu cũ
+  address: { type: String }, 
+  isDefault: { type: Boolean, default: false }
 });
 
 const userSchema = new mongoose.Schema({
   fullName: {
     type: String,
-    required: true,
+    required: [true, 'Vui lòng nhập họ tên'],
     trim: true
   },
   email: {
     type: String,
-    required: true,
+    required: [true, 'Vui lòng nhập email'],
     unique: true,
     lowercase: true,
     trim: true
   },
   password: {
     type: String,
-    required: true
+    required: [true, 'Vui lòng nhập mật khẩu'],
+    minlength: 6
   },
-  phone: { type: String, default: '' },
-  
-  // Bạn có thể giữ field address cũ hoặc bỏ đi nếu chỉ dùng addresses
-  address: { type: String, default: '' },
-  
-  // Sổ địa chỉ (Mới thêm)
-  addresses: [addressSchema],
-
-  // --- SỬA DÒNG NÀY ---
-  // Đường dẫn ảnh mặc định trỏ vào thư mục uploads
+  phone: {
+    type: String,
+    default: ''
+  },
   avatar: {
     type: String,
-    default: '/uploads/default-avatar.jpg' 
+    default: '' 
   },
-  // --------------------
-
   role: {
     type: String,
     enum: ['customer', 'seller', 'admin'],
     default: 'customer'
   },
-  authProvider: {
-    type: String,
-    enum: ['local', 'google', 'facebook'],
-    default: 'local'
+  // Mảng chứa danh sách địa chỉ giao hàng
+  addresses: [addressSchema],
+  
+  // Thông tin shop (nếu là seller)
+  sellerInfo: {
+    shopName: { type: String },
+    shopAddress: { type: String },
+    shopDescription: { type: String },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    }
   },
-  authProviderId: { type: String },
+  
+  // Các trường phục vụ reset password
   otp: String,
   otpExpires: Date,
-  sellerInfo: sellerInfoSchema,
-  isActive: { type: Boolean, default: true },
-  lastLogin: { type: Date }
+  
+  lastLogin: {
+    type: Date,
+    default: Date.now
+  }
 }, {
   timestamps: true
 });
-
-userSchema.index({ email: 1 });
-userSchema.index({ role: 1 });
 
 const User = mongoose.model('User', userSchema);
 

@@ -7,15 +7,12 @@ import { FaDog, FaCat, FaPaw, FaShieldAlt, FaTruck, FaHeadset, FaBoxOpen } from 
 const Home = () => {
   const [latestPets, setLatestPets] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // --- STATE LƯU ID CÁC DANH MỤC NỔI BẬT (MỚI) ---
   const [featuredIds, setFeaturedIds] = useState({
       dog: '',
       cat: '',
       other: ''
   });
 
-  // --- LOGIC SLIDESHOW ẢNH HERO ---
   const heroImages = [
     "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1049&q=80", // Chó
     "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80", // Mèo
@@ -50,18 +47,16 @@ const Home = () => {
       try {
         const { data: categories } = await api.get('/categories');
         const petsRoot = categories.find(c => c.slug === 'thu-cung');
-
-        // --- LẤY ID CHO DANH MỤC NỔI BẬT (MỚI) ---
         const dogCat = categories.find(c => c.slug === 'cho-canh');
         const catCat = categories.find(c => c.slug === 'meo-canh');
-        const otherCat = categories.find(c => c.slug === 'thu-khac'); // Slug trong seeder là 'thu-khac'
+        const otherCat = categories.find(c => c.slug === 'thu-khac'); 
 
         setFeaturedIds({
             dog: dogCat?._id || '',
             cat: catCat?._id || '',
             other: otherCat?._id || ''
         });
-        // -----------------------------------------
+
 
         if (petsRoot) {
             const { data } = await api.get(`/pets?pageNumber=1&category=${petsRoot._id}`);
@@ -132,8 +127,6 @@ const Home = () => {
             <h2 className="text-2xl font-bold text-center mb-10">Danh mục nổi bật</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 
-                {/* --- SỬA CÁC LINK DƯỚI ĐÂY DÙNG ID ĐỘNG --- */}
-                
                 <Link to={featuredIds.dog ? `/pets?category=${featuredIds.dog}` : '/pets'} className="flex flex-col items-center p-6 bg-gray-50 rounded-xl hover:bg-yellow-50 hover:shadow-md transition-all group">
                     <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4 group-hover:bg-[var(--color-primary)] transition-colors">
                         <FaDog className="text-3xl text-[var(--color-primary)] group-hover:text-white" />
@@ -152,7 +145,7 @@ const Home = () => {
                     <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4 group-hover:bg-[var(--color-primary)] transition-colors">
                         <FaPaw className="text-3xl text-[var(--color-primary)] group-hover:text-white" />
                     </div>
-                    <span className="font-semibold text-gray-700">Thú Khác</span>
+                    <span className="font-semibold text-gray-700">Thú cưng Khác</span>
                 </Link>
 
                 <Link to="/accessories" className="flex flex-col items-center p-6 bg-gray-50 rounded-xl hover:bg-yellow-50 hover:shadow-md transition-all group">

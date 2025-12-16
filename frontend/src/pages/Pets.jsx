@@ -26,6 +26,7 @@ const Pets = () => {
     minPrice: queryParams.get('minPrice') || '',
     maxPrice: queryParams.get('maxPrice') || '',
     gender: queryParams.get('gender') || '',
+    color: queryParams.get('color') || '',
     city: queryParams.get('city') || '',
     sort: queryParams.get('sort') || 'newest',
     pageNumber: queryParams.get('pageNumber') || 1
@@ -123,6 +124,7 @@ const Pets = () => {
 
         if (filters.gender) params.append('gender', filters.gender);
         if (filters.city) params.append('city', filters.city);
+        if (filters.color) params.append('color', filters.color);
         
         // Không navigate ở đây để tránh loop khi tìm kiếm từ Header
         // if (location.pathname !== '/accessories') {
@@ -280,6 +282,19 @@ const Pets = () => {
                     <option value="Hà Nội">Hà Nội</option>
                     <option value="Đà Nẵng">Đà Nẵng</option>
                 </select>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="font-bold text-gray-800 mb-4"><FaMapMarkerAlt className="text-gray-400"/>Màu sắc</h3>
+                <select name="color" value={filters.color} onChange={handleFilterChange} className="w-full">
+                    <option value="">Tất cả</option>
+                    <option value="Đỏ">Đỏ</option>
+                    <option value="Vàng">Vàng</option>
+                    <option value="Đen">Đen</option>
+                    <option value="Trắng">Trắng</option>
+                </select>
+
+
             </div>
 
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">

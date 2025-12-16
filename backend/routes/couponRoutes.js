@@ -1,9 +1,8 @@
-
-
 const express = require('express');
 const router = express.Router();
 const couponController = require('../controllers/couponController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+// Sửa 'authorize' thành 'adminOnly' để đồng bộ với các route khác
+const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 // --- Customer Route ---
 
@@ -19,7 +18,7 @@ router.post('/validate', protect, couponController.validateCoupon);
 router.get(
   '/',
   protect,
-  authorize('admin'),
+  adminOnly, // Sử dụng adminOnly thay vì authorize('admin')
   couponController.getAllCoupons
 );
 
@@ -27,7 +26,7 @@ router.get(
 router.post(
   '/',
   protect,
-  authorize('admin'),
+  adminOnly,
   couponController.createCoupon
 );
 
@@ -35,7 +34,7 @@ router.post(
 router.put(
   '/:id',
   protect,
-  authorize('admin'),
+  adminOnly,
   couponController.updateCoupon
 );
 
@@ -43,7 +42,7 @@ router.put(
 router.delete(
   '/:id',
   protect,
-  authorize('admin'),
+  adminOnly,
   couponController.deleteCoupon
 );
 

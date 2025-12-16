@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { CartContext } from '../context/CartContext'; 
 import { AuthContext } from '../context/AuthContext';
 import ReviewSection from '../components/ReviewSection'; 
+import CustomerChat from '../components/CustomerChat'; // [MỚI] Import Chat Component
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -53,7 +54,7 @@ const ProductDetail = () => {
   const isOwner = user && pet.seller && (user._id === pet.seller._id || user._id === pet.seller);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 relative"> 
       <div className="text-sm text-gray-500 mb-6">
         <Link to="/" className="hover:text-[var(--color-primary)]">Trang chủ</Link> / 
         <Link to={isPet ? "/pets" : "/accessories"} className="hover:text-[var(--color-primary)] ml-1">
@@ -132,6 +133,9 @@ const ProductDetail = () => {
 
                         <div className="text-gray-500">Chiều dài:</div>
                         <div className="font-medium text-gray-900 flex items-center gap-1">{pet.length || 'Chưa cập nhật'}</div>
+
+                        <div className="text-gray-500">Màu sắc:</div>
+                        <div className="font-medium text-gray-900">{pet.color}</div>
                     </>
                 )}
 
@@ -200,6 +204,12 @@ const ProductDetail = () => {
 
       <ReviewSection productId={id} />
       
+      {/* [MỚI] HIỂN THỊ NÚT CHAT VỚI NGƯỜI BÁN */}
+      {/* Chỉ hiện khi người xem không phải là chủ shop */}
+      {!isOwner && pet.seller && (
+          <CustomerChat sellerId={pet.seller._id || pet.seller} />
+      )}
+
     </div>
   );
 };

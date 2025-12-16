@@ -21,9 +21,9 @@ const Header = () => {
 
   // --- XỬ LÝ TÌM KIẾM ---
   const handleSearch = (e) => {
-    e.preventDefault(); // Ngăn reload trang
+    e.preventDefault();   
     if (keyword.trim()) {
-      // Chuyển hướng sang trang Pets kèm từ khóa
+      
       navigate(`/pets?keyword=${encodeURIComponent(keyword.trim())}`);
       setIsMenuOpen(false); // Đóng menu mobile nếu đang mở
     } else {
@@ -92,7 +92,6 @@ const Header = () => {
                     </div>
                  </div>
                ) : (
-                 /* --- CẬP NHẬT PHẦN NÀY: Dùng NavLink để active style --- */
                  <>
                     <NavLink 
                         to="/login" 

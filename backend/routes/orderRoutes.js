@@ -5,10 +5,10 @@ const {
   getOrderById,
   getMyOrders,
   cancelOrder,
-  getSellerOrders,  // <-- Mới
+  getSellerOrders,  
   updateOrderStatus,
   getSellerStats,
-  confirmReceived  // <-- Mới
+  confirmReceived  
 } = require('../controllers/orderController');
 const { protect, sellerOnly } = require('../middleware/authMiddleware');
 
@@ -17,8 +17,8 @@ router.get('/myorders', protect, getMyOrders);
 
 // Route cho Seller (Phải có quyền sellerOnly)
 router.get('/seller-orders', protect, sellerOnly, getSellerOrders); 
-router.get('/seller-stats', protect, sellerOnly, getSellerStats); // <-- Mới
-router.put('/:id/status', protect, sellerOnly, updateOrderStatus);  // <-- Mới
+router.get('/seller-stats', protect, sellerOnly, getSellerStats); 
+router.put('/:id/status', protect, sellerOnly, updateOrderStatus);  
 
 // Lưu ý: Route /:id phải đặt cuối cùng để tránh trùng lặp
 router.put('/:id/cancel', protect, cancelOrder);

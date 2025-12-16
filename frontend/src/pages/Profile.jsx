@@ -2,18 +2,20 @@ import { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-toastify';
-import { FaUser, FaMapMarkerAlt, FaLock, FaCamera, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaUser, FaMapMarkerAlt, FaLock, FaCamera, FaTrash, FaPlus, FaTimes } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; 
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('info'); 
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null); 
 
-
   const DEFAULT_AVATAR = "/uploads/default-avatar.jpg"; 
 
-
+  // --- STATE PROFILE ---
   const [infoForm, setInfoForm] = useState({
     fullName: '',
     phone: '',
@@ -21,23 +23,93 @@ const Profile = () => {
   });
   const [avatarFile, setAvatarFile] = useState(null); 
 
+  // --- STATE PASSWORD ---
   const [passForm, setPassForm] = useState({ password: '', confirmPassword: '' });
+
+  // --- STATE ADDRESS (MỚI) ---
   const [addresses, setAddresses] = useState([]);
-  const [newAddress, setNewAddress] = useState({ fullName: '', phone: '', address: '' });
   const [showAddAddr, setShowAddAddr] = useState(false);
 
+  // State cho Dropdown Địa chính
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+
+  // Form thêm địa chỉ mới (Cấu trúc mới)
+  const [addressForm, setAddressForm] = useState({
+      provinceCode: '', provinceName: '',
+      districtCode: '', districtName: '',
+      wardCode: '', wardName: '',
+      specificAddress: '',
+      isDefault: false
+  });
+
   useEffect(() => {
-    if (user) {
+    if (!user) {
+        navigate('/login');
+    } else {
       setInfoForm({
         fullName: user.fullName || '',
         phone: user.phone || '',
-        // Logic kiểm tra ảnh: Nếu rỗng, null hoặc là object rỗng thì dùng Default
         avatar: (user.avatar && user.avatar !== "{}" && user.avatar !== "undefined") ? user.avatar : DEFAULT_AVATAR
       });
       fetchAddresses();
     }
-  }, [user]);
+  }, [user, navigate]);
 
+  // --- LOGIC LẤY DỮ LIỆU ĐỊA CHÍNH (API PUBLIC) ---
+  useEffect(() => {
+      const fetchProvinces = async () => {
+          try {
+              const res = await axios.get('https://provinces.open-api.vn/api/?depth=1');
+              setProvinces(res.data);
+          } catch (error) {
+              console.error("Lỗi lấy tỉnh thành:", error);
+          }
+      };
+      fetchProvinces();
+  }, []);
+
+  const fetchDistricts = async (provinceCode) => {
+      try {
+          const res = await axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+          setDistricts(res.data.districts);
+          setWards([]); 
+      } catch (error) { console.error(error); }
+  };
+
+  const fetchWards = async (districtCode) => {
+      try {
+          const res = await axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
+          setWards(res.data.wards);
+      } catch (error) { console.error(error); }
+  };
+
+  // --- HANDLERS DROPDOWN ---
+  const handleProvinceChange = (e) => {
+      const code = e.target.value;
+      const index = e.target.selectedIndex;
+      const name = e.target.options[index].text;
+      setAddressForm({ ...addressForm, provinceCode: code, provinceName: name, districtCode: '', districtName: '', wardCode: '', wardName: '' });
+      fetchDistricts(code);
+  };
+
+  const handleDistrictChange = (e) => {
+      const code = e.target.value;
+      const index = e.target.selectedIndex;
+      const name = e.target.options[index].text;
+      setAddressForm({ ...addressForm, districtCode: code, districtName: name, wardCode: '', wardName: '' });
+      fetchWards(code);
+  };
+
+  const handleWardChange = (e) => {
+      const code = e.target.value;
+      const index = e.target.selectedIndex;
+      const name = e.target.options[index].text;
+      setAddressForm({ ...addressForm, wardCode: code, wardName: name });
+  };
+
+  // --- HANDLERS FETCH DATA ---
   const fetchAddresses = async () => {
       try {
           const { data } = await api.get('/users/address');
@@ -55,6 +127,7 @@ const Profile = () => {
       }
   };
 
+  // --- UPDATE PROFILE ---
   const handleUpdateInfo = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -67,14 +140,14 @@ const Profile = () => {
           formData.append('avatar', avatarFile);
       }
 
-      // Backend (Multer) cần đọc formData, Axios tự động set Content-Type
       const { data } = await api.put('/users/profile', formData);
       
-      localStorage.setItem('token', data.token);
+      // Cập nhật token mới nếu có thay đổi thông tin quan trọng
+      if(data.token) {
+          localStorage.setItem('token', data.token);
+      }
       
-      // Force reload để xóa cache ảnh cũ nếu có và cập nhật UI
       window.location.reload();
-      
       toast.success('Cập nhật hồ sơ thành công!');
     } catch (error) {
       console.error("Update error:", error);
@@ -84,7 +157,7 @@ const Profile = () => {
     }
   };
 
-  // ... (Các hàm khác giữ nguyên: handleChangePassword, handleAddAddress, handleDeleteAddress)
+  // --- CHANGE PASSWORD ---
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (passForm.password !== passForm.confirmPassword) {
@@ -102,13 +175,31 @@ const Profile = () => {
     }
   };
 
+  // --- ADD ADDRESS (LOGIC MỚI) ---
   const handleAddAddress = async (e) => {
       e.preventDefault();
+      if(!addressForm.provinceName || !addressForm.districtName || !addressForm.wardName || !addressForm.specificAddress) {
+          return toast.error('Vui lòng chọn đầy đủ thông tin địa chỉ');
+      }
+
       try {
-          await api.post('/users/address', { ...newAddress, isDefault: false });
+          await api.post('/users/address', { 
+              province: addressForm.provinceName,
+              district: addressForm.districtName,
+              ward: addressForm.wardName,
+              specificAddress: addressForm.specificAddress,
+              isDefault: addressForm.isDefault
+          });
           toast.success('Thêm địa chỉ mới thành công');
           setShowAddAddr(false);
-          setNewAddress({ fullName: '', phone: '', address: '' });
+          // Reset form
+          setAddressForm({ 
+              provinceCode: '', provinceName: '', 
+              districtCode: '', districtName: '', 
+              wardCode: '', wardName: '', 
+              specificAddress: '', 
+              isDefault: false 
+          });
           fetchAddresses();
       } catch (error) {
           toast.error('Lỗi thêm địa chỉ');
@@ -128,7 +219,7 @@ const Profile = () => {
   }
 
   const handleImageError = (e) => {
-      e.target.src = DEFAULT_AVATAR; // Fallback về ảnh mặc định local nếu ảnh user bị lỗi
+      e.target.src = DEFAULT_AVATAR; 
   };
 
   return (
@@ -196,43 +287,120 @@ const Profile = () => {
                     </form>
                 )}
 
-                {/* FORM ĐỊA CHỈ */}
+                {/* FORM ĐỊA CHỈ (ĐÃ SỬA) */}
                 {activeTab === 'address' && (
                     <div>
                         <div className="flex justify-between items-center mb-6 border-b pb-4">
-                            <h2 className="text-xl font-bold text-gray-800">Địa chỉ của tôi</h2>
+                            <h2 className="text-xl font-bold text-gray-800">Địa chỉ nhận hàng</h2>
                             <button onClick={() => setShowAddAddr(!showAddAddr)} className="bg-[var(--color-primary)] text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
                                 <FaPlus /> Thêm địa chỉ mới
                             </button>
                         </div>
 
                         {showAddAddr && (
-                            <form onSubmit={handleAddAddress} className="bg-gray-50 p-4 rounded-lg mb-6 animate-fade-in border border-gray-200">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                    <input type="text" placeholder="Họ tên người nhận" required className="border p-2 rounded" value={newAddress.fullName} onChange={e => setNewAddress({...newAddress, fullName: e.target.value})}/>
-                                    <input type="text" placeholder="Số điện thoại" required className="border p-2 rounded" value={newAddress.phone} onChange={e => setNewAddress({...newAddress, phone: e.target.value})}/>
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 backdrop-blur-sm">
+                                <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+                                    <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+                                        <h3 className="font-bold text-lg text-gray-800">Thêm địa chỉ mới</h3>
+                                        <button onClick={() => setShowAddAddr(false)} className="text-gray-400 hover:text-red-500"><FaTimes /></button>
+                                    </div>
+                                    <form onSubmit={handleAddAddress} className="p-6 space-y-4">
+                                        {/* DROPDOWN TỈNH/THÀNH */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Tỉnh / Thành phố</label>
+                                            <select 
+                                                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-[var(--color-primary)]"
+                                                value={addressForm.provinceCode}
+                                                onChange={handleProvinceChange}
+                                                required
+                                            >
+                                                <option value="">-- Chọn Tỉnh / Thành phố --</option>
+                                                {provinces.map(p => (
+                                                    <option key={p.code} value={p.code}>{p.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* DROPDOWN QUẬN/HUYỆN */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Quận / Huyện</label>
+                                            <select 
+                                                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-[var(--color-primary)] disabled:bg-gray-100"
+                                                value={addressForm.districtCode}
+                                                onChange={handleDistrictChange}
+                                                disabled={!addressForm.provinceCode}
+                                                required
+                                            >
+                                                <option value="">-- Chọn Quận / Huyện --</option>
+                                                {districts.map(d => (
+                                                    <option key={d.code} value={d.code}>{d.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* DROPDOWN PHƯỜNG/XÃ */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Phường / Xã</label>
+                                            <select 
+                                                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-[var(--color-primary)] disabled:bg-gray-100"
+                                                value={addressForm.wardCode}
+                                                onChange={handleWardChange}
+                                                disabled={!addressForm.districtCode}
+                                                required
+                                            >
+                                                <option value="">-- Chọn Phường / Xã --</option>
+                                                {wards.map(w => (
+                                                    <option key={w.code} value={w.code}>{w.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* ĐỊA CHỈ CỤ THỂ */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ cụ thể</label>
+                                            <textarea 
+                                                rows="2"
+                                                className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:border-[var(--color-primary)]"
+                                                placeholder="Số nhà, tên đường, tòa nhà..."
+                                                value={addressForm.specificAddress}
+                                                onChange={(e) => setAddressForm({...addressForm, specificAddress: e.target.value})}
+                                                required
+                                            ></textarea>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="checkbox" 
+                                                id="isDefault" 
+                                                checked={addressForm.isDefault}
+                                                onChange={(e) => setAddressForm({...addressForm, isDefault: e.target.checked})}
+                                                className="rounded text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
+                                            />
+                                            <label htmlFor="isDefault" className="text-sm text-gray-700 cursor-pointer">Đặt làm địa chỉ mặc định</label>
+                                        </div>
+
+                                        <div className="pt-2 flex justify-end gap-3">
+                                            <button type="button" onClick={() => setShowAddAddr(false)} className="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50">Hủy</button>
+                                            <button type="submit" className="px-6 py-2 bg-[var(--color-primary)] text-white font-bold rounded-lg hover:bg-yellow-600 shadow-sm">Lưu địa chỉ</button>
+                                        </div>
+                                    </form>
                                 </div>
-                                <textarea placeholder="Địa chỉ chi tiết (Số nhà, Đường, Quận, TP)" required className="border p-2 rounded w-full mb-4" value={newAddress.address} onChange={e => setNewAddress({...newAddress, address: e.target.value})}></textarea>
-                                <div className="flex justify-end gap-2">
-                                    <button type="button" onClick={() => setShowAddAddr(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded">Hủy</button>
-                                    <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Lưu</button>
-                                </div>
-                            </form>
+                            </div>
                         )}
 
                         <div className="space-y-4">
-                            {addresses.length === 0 ? <p className="text-gray-500">Chưa có địa chỉ nào.</p> : addresses.map(addr => (
-                                <div key={addr._id} className="border rounded-lg p-4 flex justify-between items-start hover:shadow-sm transition-shadow">
+                            {addresses.length === 0 ? <p className="text-gray-500 text-center py-8">Bạn chưa lưu địa chỉ nào.</p> : addresses.map(addr => (
+                                <div key={addr._id} className="border border-gray-200 rounded-lg p-4 flex justify-between items-start hover:shadow-sm transition-shadow">
                                     <div>
-                                        <div className="font-bold text-gray-800 flex items-center gap-2">
-                                            {addr.fullName} 
-                                            <span className="font-normal text-gray-500 text-sm">| {addr.phone}</span>
-                                            {addr.isDefault && <span className="bg-[var(--color-primary)] text-white text-[10px] px-2 py-0.5 rounded">Mặc định</span>}
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-bold text-gray-800 text-lg">Địa chỉ giao hàng</span>
+                                            {addr.isDefault && <span className="text-xs bg-[var(--color-primary)] text-white px-2 py-0.5 rounded">Mặc định</span>}
                                         </div>
-                                        <p className="text-gray-600 text-sm mt-1">{addr.address}</p>
+                                        <p className="text-gray-600 text-sm mt-1">{addr.specificAddress}</p>
+                                        <p className="text-gray-600 text-sm">{addr.ward}, {addr.district}, {addr.province}</p>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button onClick={() => handleDeleteAddress(addr._id)} className="text-red-500 hover:bg-red-50 p-2 rounded"><FaTrash /></button>
+                                        <button onClick={() => handleDeleteAddress(addr._id)} className="text-red-500 hover:bg-red-50 p-2 rounded transition-colors"><FaTrash /></button>
                                     </div>
                                 </div>
                             ))}

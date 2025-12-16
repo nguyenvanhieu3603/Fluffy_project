@@ -1,10 +1,10 @@
 const Order = require('../models/orderModel');
 const Notification = require('../models/notificationModel');
 const Pet = require('../models/petModel');
+const Coupon = require('../models/couponModel'); // Import Coupon Model
 
 // @desc    Tạo đơn hàng mới
 // @route   POST /api/orders
-// @access  Private
 const addOrderItems = async (req, res) => {
   try {
     const {
@@ -14,37 +14,60 @@ const addOrderItems = async (req, res) => {
       itemsPrice,
       shippingPrice,
       totalPrice,
+      couponCode, // Nhận thêm mã giảm giá từ Frontend
+      discountAmount // Nhận số tiền giảm để lưu (cần verify lại ở server cho chắc)
     } = req.body;
 
     if (orderItems && orderItems.length === 0) {
       return res.status(400).json({ message: 'Không có sản phẩm nào trong giỏ hàng' });
     } else {
       const firstItem = orderItems[0];
-      
-      if (!firstItem.seller) {
-          return res.status(400).json({ message: 'Dữ liệu sản phẩm thiếu thông tin người bán (Seller ID)' });
-      }
-
       const sellerId = firstItem.seller._id || firstItem.seller; 
 
       if (req.user._id.toString() === sellerId.toString()) {
           return res.status(400).json({ message: 'Bạn không thể tự đặt mua sản phẩm của chính mình.' });
       }
 
-      // --- 1. KIỂM TRA & TRỪ TỒN KHO ---
+      // 1. TRỪ TỒN KHO
       for (const item of orderItems) {
           const product = await Pet.findById(item.pet);
-          if (!product) {
-              return res.status(404).json({ message: `Sản phẩm ${item.name} không tồn tại` });
-          }
-          if (product.stock < item.quantity) {
-              return res.status(400).json({ message: `Sản phẩm ${item.name} đã hết hàng hoặc không đủ số lượng` });
-          }
-          // Trừ kho
+          if (!product) return res.status(404).json({ message: `Sản phẩm ${item.name} không tồn tại` });
+          if (product.stock < item.quantity) return res.status(400).json({ message: `Sản phẩm ${item.name} không đủ số lượng` });
+          
           product.stock = product.stock - item.quantity;
           await product.save();
       }
-      // ---------------------------------
+
+      // 2. XỬ LÝ COUPON (NẾU CÓ)
+      let finalDiscount = 0;
+      let couponInfo = {};
+
+      if (couponCode) {
+          const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+          
+          // Kiểm tra tính hợp lệ của coupon lần cuối tại Server (để tránh hack ở client)
+          if (coupon && coupon.isActive && coupon.expiryDate > Date.now() && coupon.usageCount < coupon.usageLimit && itemsPrice >= coupon.minOrderValue) {
+              
+              // Tính toán lại số tiền giảm
+              if (coupon.discountType === 'percent') {
+                  finalDiscount = (itemsPrice * coupon.discountValue) / 100;
+              } else {
+                  finalDiscount = coupon.discountValue;
+              }
+
+              // Tăng số lượt sử dụng
+              coupon.usageCount += 1;
+              await coupon.save();
+
+              couponInfo = {
+                  code: couponCode,
+                  discount: finalDiscount
+              };
+          }
+      }
+
+      // Tính lại totalPrice ở Server để đảm bảo an toàn
+      const calculatedTotal = itemsPrice + shippingPrice - finalDiscount;
 
       const order = new Order({
         orderItems,
@@ -53,7 +76,12 @@ const addOrderItems = async (req, res) => {
         seller: sellerId,
         shippingInfo,
         paymentMethod,
-        prices: { itemsPrice, shippingPrice, totalPrice },
+        coupon: couponInfo, // Lưu thông tin coupon
+        prices: { 
+            itemsPrice, 
+            shippingPrice, 
+            totalPrice: calculatedTotal // Dùng giá đã tính toán lại
+        },
         status: 'pending'
       });
 
@@ -66,9 +94,9 @@ const addOrderItems = async (req, res) => {
   }
 };
 
-// @desc    Lấy chi tiết đơn hàng theo ID
-// @route   GET /api/orders/:id
-// @access  Private
+// ... (Giữ nguyên các hàm khác getOrderById, getMyOrders, v.v...)
+// Bạn chỉ cần copy hàm addOrderItems ở trên thay vào file cũ
+
 const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
@@ -85,9 +113,6 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// @desc    Lấy danh sách đơn hàng của tôi (Người mua)
-// @route   GET /api/orders/myorders
-// @access  Private
 const getMyOrders = async (req, res) => {
     try {
         const orders = await Order.find({ customer: req.user._id }).sort({ createdAt: -1 });
@@ -97,9 +122,6 @@ const getMyOrders = async (req, res) => {
     }
 }
 
-// @desc    Lấy danh sách đơn hàng của Seller
-// @route   GET /api/orders/seller-orders
-// @access  Private/Seller
 const getSellerOrders = async (req, res) => {
   try {
     const orders = await Order.find({ seller: req.user._id })
@@ -111,9 +133,6 @@ const getSellerOrders = async (req, res) => {
   }
 };
 
-// @desc    Hủy đơn hàng (Khách hàng)
-// @route   PUT /api/orders/:id/cancel
-// @access  Private
 const cancelOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -130,7 +149,6 @@ const cancelOrder = async (req, res) => {
       order.cancelledAt = Date.now();
       await order.save();
 
-      // --- HOÀN LẠI TỒN KHO KHI HỦY ĐƠN ---
       for (const item of order.orderItems) {
           const product = await Pet.findById(item.pet);
           if (product) {
@@ -138,7 +156,6 @@ const cancelOrder = async (req, res) => {
               await product.save();
           }
       }
-      // ------------------------------------
 
       res.json(order);
     } else {
@@ -149,9 +166,6 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-// @desc    Cập nhật trạng thái đơn hàng (Seller)
-// @route   PUT /api/orders/:id/status
-// @access  Private/Seller
 const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -162,7 +176,6 @@ const updateOrderStatus = async (req, res) => {
           return res.status(403).json({ message: 'Bạn không có quyền quản lý đơn hàng này' });
       }
 
-      // Nếu Seller hủy đơn, cũng phải hoàn kho
       if (status === 'cancelled' && order.status !== 'cancelled') {
           for (const item of order.orderItems) {
               const product = await Pet.findById(item.pet);
@@ -223,9 +236,6 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-// @desc    Lấy thống kê cho Seller Dashboard
-// @route   GET /api/orders/seller-stats
-// @access  Private/Seller
 const getSellerStats = async (req, res) => {
   try {
     const sellerId = req.user._id;
@@ -233,7 +243,6 @@ const getSellerStats = async (req, res) => {
     const totalProducts = await Pet.countDocuments({ seller: sellerId });
     const pendingOrders = await Order.countDocuments({ seller: sellerId, status: 'pending' });
     
-    // Lấy cả đơn 'delivered' và 'completed'
     const revenueOrders = await Order.find({ 
         seller: sellerId, 
         status: { $in: ['delivered', 'completed'] } 
@@ -263,9 +272,6 @@ const getSellerStats = async (req, res) => {
   }
 };
 
-// @desc    Khách hàng xác nhận đã nhận hàng
-// @route   PUT /api/orders/:id/received
-// @access  Private/Customer
 const confirmReceived = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);

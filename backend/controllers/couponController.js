@@ -1,6 +1,4 @@
-const Coupon = require('../models/Coupon.js');
-
-
+const Coupon = require('../models/couponModel'); // Đã sửa tên file cho đúng
 
 // Logic TẠO MÃ GIẢM GIÁ (POST /api/v1/coupons)
 // Yêu cầu: Admin
@@ -143,7 +141,7 @@ exports.validateCoupon = async (req, res) => {
         });
     }
 
-    // 6. (OK) Tính toán số tiền giảm
+    // 6. Tính toán số tiền giảm
     let discountPrice = 0;
     if (coupon.discountType === 'percent') {
       discountPrice = (orderTotal * coupon.discountValue) / 100;

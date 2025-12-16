@@ -10,20 +10,11 @@ const protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
-
-      // Giải mã token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Tìm user
       req.user = await User.findById(decoded.id).select('-password');
-
-      
-      // Nếu user trong token không còn tồn tại trong DB (do đã chạy seeder xóa đi)
       if (!req.user) {
           return res.status(401).json({ message: 'Tài khoản không tồn tại hoặc đã bị xóa.' });
       }
-      // ------------------------------------------
-
       next();
     } catch (error) {
       console.error(error);

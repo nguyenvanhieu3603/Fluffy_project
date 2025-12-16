@@ -2,18 +2,25 @@ const Pet = require('../models/petModel');
 const Category = require('../models/categoryModel'); 
 const User = require('../models/userModel');
 
-// @desc    Lấy danh sách sản phẩm (Hỗ trợ lọc theo type)
+// @desc    Lấy danh sách thú cưng
 const getPets = async (req, res) => {
   try {
     const pageSize = 12;
     const page = Number(req.query.pageNumber) || 1;
 
-    // Lọc theo từ khóa
-    const keyword = req.query.keyword
-      ? { name: { $regex: req.query.keyword, $options: 'i' } }
-      : {};
+    // 1. Xử lý Tìm kiếm: Tìm theo Tên HOẶC Màu sắc
+    let keyword = {};
+    if (req.query.keyword) {
+        const regex = { $regex: req.query.keyword, $options: 'i' };
+        keyword = {
+            $or: [
+                { name: regex },
+                { color: regex } // Thêm tìm kiếm theo màu
+            ]
+        };
+    }
 
-    // Lọc theo Danh mục
+    // 2. Xử lý Lọc Danh mục
     let categoryFilter = {};
     if (req.query.category) {
         const ids = req.query.category.split(',');
@@ -23,7 +30,6 @@ const getPets = async (req, res) => {
             try {
                 const currentCat = await Category.findById(ids[0]);
                 if (currentCat) {
-                    // Lấy cả danh mục con
                     const level2Cats = await Category.find({ parentId: currentCat._id });
                     const level2Ids = level2Cats.map(c => c._id);
                     const level3Cats = await Category.find({ parentId: { $in: level2Ids } });
@@ -33,11 +39,13 @@ const getPets = async (req, res) => {
                 } else {
                     categoryFilter = { category: ids[0] };
                 }
-            } catch (err) { categoryFilter = {}; }
+            } catch (err) {
+                categoryFilter = {}; 
+            }
         }
     }
     
-    // Lọc theo Giá
+    // 3. Xử lý Lọc Giá
     const priceFilter = {};
     if (req.query.minPrice || req.query.maxPrice) {
         priceFilter.price = {};
@@ -45,26 +53,28 @@ const getPets = async (req, res) => {
         if (req.query.maxPrice) priceFilter.price.$lte = Number(req.query.maxPrice);
     }
 
-    // --- MỚI: Lọc theo Type (pet/accessory) ---
     const typeFilter = req.query.type ? { type: req.query.type } : {};
-
     const genderFilter = req.query.gender ? { gender: req.query.gender } : {};
     const breedFilter = req.query.breed ? { breed: { $regex: req.query.breed, $options: 'i' } } : {};
+    
+    // Nếu muốn lọc chính xác theo màu (ngoài thanh tìm kiếm)
+    const colorFilter = req.query.color ? { color: { $regex: req.query.color, $options: 'i' } } : {};
+    
     const locationFilter = req.query.city ? { 'location.city': { $regex: req.query.city, $options: 'i' } } : {};
 
-    // Điều kiện cơ bản: Phải available VÀ (đã duyệt HOẶC là phụ kiện)
     const baseCondition = { 
         status: 'available',
         $or: [
             { healthStatus: 'approved' },
-            { healthStatus: 'not_required' } // Phụ kiện sẽ rơi vào đây
+            { healthStatus: 'not_required' } 
         ],
         ...keyword,
         ...categoryFilter,
         ...priceFilter,
-        ...typeFilter, // <--- Apply type filter
+        ...typeFilter,
         ...genderFilter,
         ...breedFilter,
+        ...colorFilter,
         ...locationFilter
     };
 
@@ -99,7 +109,10 @@ const getPetById = async (req, res) => {
         .populate({
             path: 'category',
             select: 'name parentId', 
-            populate: { path: 'parentId', select: 'name' }
+            populate: {
+                path: 'parentId', 
+                select: 'name'
+            }
         });
 
     if (pet) {
@@ -107,44 +120,33 @@ const getPetById = async (req, res) => {
       await pet.save();
       res.json(pet);
     } else {
-      res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
+      res.status(404).json({ message: 'Không tìm thấy thú cưng này' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Tạo sản phẩm mới (Thú cưng hoặc Phụ kiện)
+// @desc    Tạo thú cưng mới (Seller)
 const createPet = async (req, res) => {
   try {
-    const { 
-        name, description, price, category, stock, 
-        type, // 'pet' hoặc 'accessory'
-        age, gender, breed, weight, length 
-    } = req.body;
-
+    // Nhận thêm trường color
+    const { name, description, price, category, stock, type, age, gender, breed, weight, length, color } = req.body;
     const imageFiles = req.files && req.files['images'] ? req.files['images'] : [];
-    if (imageFiles.length === 0) return res.status(400).json({ message: 'Vui lòng upload ít nhất 1 ảnh' });
-
-    const imageUrls = imageFiles.map(file => `/uploads/${file.filename}`);
     
-    // Xử lý địa chỉ shop
-    const seller = await User.findById(req.user._id);
-    const shopAddress = seller.sellerInfo?.shopAddress || '';
-    const addressParts = shopAddress.split(',').map(part => part.trim());
-    const city = addressParts.length > 0 ? addressParts[addressParts.length - 1] : 'Toàn quốc';
-    const district = addressParts.length > 1 ? addressParts[addressParts.length - 2] : 'Khác';
+    if (imageFiles.length === 0) {
+        return res.status(400).json({ message: 'Vui lòng upload ít nhất 1 ảnh sản phẩm' });
+    }
 
-    // --- LOGIC PHÂN LOẠI ---
+    const certFile = req.files && req.files['certification'] ? req.files['certification'][0] : null;
+    let certPath = '';
+
     let healthStatus = 'pending';
     let healthInfo = {};
 
     if (type === 'accessory') {
-        // Nếu là phụ kiện: Không cần duyệt sức khỏe
         healthStatus = 'not_required';
     } else {
-        // Nếu là thú cưng: Bắt buộc có giấy tờ
-        const certFile = req.files && req.files['certification'] ? req.files['certification'][0] : null;
         if (!certFile) {
             return res.status(400).json({ message: 'Bắt buộc tải lên Giấy chứng nhận sức khỏe cho thú cưng' });
         }
@@ -152,35 +154,44 @@ const createPet = async (req, res) => {
         healthStatus = 'pending';
     }
 
-    const newProduct = new Pet({
-      type: type || 'pet', // Mặc định là pet nếu không gửi
+    const imageUrls = imageFiles.map(file => `/uploads/${file.filename}`);
+
+    const seller = await User.findById(req.user._id);
+    const shopAddress = seller.sellerInfo?.shopAddress || '';
+    const addressParts = shopAddress.split(',').map(part => part.trim());
+    const city = addressParts.length > 0 ? addressParts[addressParts.length - 1] : 'Toàn quốc';
+    const district = addressParts.length > 1 ? addressParts[addressParts.length - 2] : 'Khác';
+
+    const pet = new Pet({
       name, description, price, category, stock,
+      type: type || 'pet',
       seller: req.user._id,
       images: imageUrls,
+      age, gender, breed,
+      weight, length, 
+      color, // Lưu màu sắc
       location: { city, district },
-      status: 'available',
-      
-      // Các trường này chỉ có ý nghĩa nếu type='pet'
-      age, gender, breed, weight, length,
       healthInfo,
-      healthStatus
+      healthStatus, 
+      status: 'available'
     });
 
-    const createdProduct = await newProduct.save();
-    res.status(201).json(createdProduct);
+    const createdPet = await pet.save();
+    res.status(201).json(createdPet);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+// @desc    Cập nhật thú cưng (Seller)
 const updatePet = async (req, res) => {
   try {
-    const { name, description, price, stock, status, age, gender, weight, length } = req.body;
+    const { name, description, price, stock, status, age, gender, weight, length, color } = req.body;
     const pet = await Pet.findById(req.params.id);
 
     if (pet) {
       if (pet.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-          return res.status(403).json({ message: 'Không có quyền sửa' });
+          return res.status(403).json({ message: 'Bạn không có quyền sửa sản phẩm này' });
       }
 
       pet.name = name || pet.name;
@@ -189,25 +200,23 @@ const updatePet = async (req, res) => {
       pet.stock = stock || pet.stock;
       pet.status = status || pet.status;
       
-      // Chỉ update thông số thú cưng nếu sản phẩm là thú cưng
       if (pet.type === 'pet') {
           if (age) pet.age = age;
           if (gender) pet.gender = gender;
           if (weight) pet.weight = weight;
           if (length) pet.length = length;
+          if (color) pet.color = color; // Cập nhật màu sắc
       }
 
-      // Update ảnh
       if (req.files && req.files['images'] && req.files['images'].length > 0) {
           const imageFiles = req.files['images'];
           pet.images = imageFiles.map(file => `/uploads/${file.filename}`);
       }
 
-      // Update giấy tờ (chỉ cho pet)
       if (pet.type === 'pet' && req.files && req.files['certification']) {
           const certFile = req.files['certification'][0];
           pet.healthInfo.vaccinationCertificate = `/uploads/${certFile.filename}`;
-          pet.healthStatus = 'pending'; // Reset về chờ duyệt khi đổi giấy tờ
+          pet.healthStatus = 'pending'; 
       }
 
       const updatedPet = await pet.save();
@@ -225,7 +234,7 @@ const deletePet = async (req, res) => {
     const pet = await Pet.findById(req.params.id);
     if (pet) {
       if (pet.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-          return res.status(403).json({ message: 'Không có quyền xóa' });
+          return res.status(403).json({ message: 'Bạn không có quyền xóa sản phẩm này' });
       }
       await pet.deleteOne();
       res.json({ message: 'Đã xóa sản phẩm' });
@@ -247,7 +256,7 @@ const approveHealthCheck = async (req, res) => {
             await pet.save();
             res.json({ message: `Đã cập nhật trạng thái: ${status}` });
         } else {
-            res.status(404).json({ message: 'Không tìm thấy' });
+            res.status(404).json({ message: 'Không tìm thấy sản phẩm' });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -256,7 +265,6 @@ const approveHealthCheck = async (req, res) => {
 
 const getMyPets = async (req, res) => {
   try {
-    // Trả về tất cả sản phẩm của người bán (cả pet và accessory)
     const pets = await Pet.find({ seller: req.user._id }).populate('category', 'name').sort({ createdAt: -1 });
     res.json(pets);
   } catch (error) {
@@ -266,7 +274,6 @@ const getMyPets = async (req, res) => {
 
 const getPendingPets = async (req, res) => {
     try {
-        // Chỉ lấy những sản phẩm có status = pending (Thú cưng đang chờ duyệt)
         const pets = await Pet.find({ healthStatus: 'pending' })
             .populate('seller', 'fullName email sellerInfo.shopName')
             .populate('category', 'name')

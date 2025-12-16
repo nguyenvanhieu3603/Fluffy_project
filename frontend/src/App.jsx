@@ -48,6 +48,7 @@ import AdminBlogs from './pages/admin/AdminBlogs';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminCoupons from './pages/admin/AdminCoupons';
+import SellerChat from './pages/seller/SellerChat'; 
 
 // Component Layout dành cho Khách hàng 
 const MainLayout = () => {
@@ -95,6 +96,7 @@ function App() {
                 <Route path="orders" element={<SellerOrders />} />
                 <Route path="pets" element={<SellerPets />} />
                 <Route path="accessories" element={<SellerAccessories />} />
+                <Route path="chat" element={<SellerChat />} />
             </Route>
         </Route>
 
@@ -114,6 +116,7 @@ function App() {
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="blogs" element={<AdminBlogs />} />
+            
         </Route>
 
       </Routes>

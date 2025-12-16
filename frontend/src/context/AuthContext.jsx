@@ -7,7 +7,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Mặc định là đang tải
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,18 +16,14 @@ export const AuthProvider = ({ children }) => {
       
       if (token) {
         try {
-          // Gọi API lấy thông tin user
           const { data } = await api.get('/users/profile');
           setUser(data);
         } catch (error) {
           console.error("Lỗi xác thực:", error);
-          // Nếu token lỗi thì xóa đi để tránh kẹt
           localStorage.removeItem('token');
           setUser(null);
         }
       }
-      
-
       setLoading(false);
     };
 
@@ -41,19 +37,18 @@ export const AuthProvider = ({ children }) => {
       setUser(data);
       toast.success(`Chào mừng ${data.fullName}!`);
       
-      // --- LOGIC CHUYỂN HƯỚNG SAU KHI ĐĂNG NHẬP ---
       if (data.role === 'admin') {
-          navigate('/admin/dashboard'); // Admin vào Dashboard quản trị
+          navigate('/admin/dashboard'); 
       } else if (data.role === 'seller') {
-          navigate('/seller/dashboard'); // Seller vào Kênh người bán
+          navigate('/seller/dashboard'); 
       } else {
-          navigate('/'); // Khách hàng về trang chủ
+          navigate('/'); 
       }
-      // --------------------------------------------
 
       return data;
     } catch (error) {
       toast.error(error.response?.data?.message || 'Đăng nhập thất bại');
+      throw error; 
     }
   };
 
@@ -66,22 +61,29 @@ export const AuthProvider = ({ children }) => {
       navigate('/');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Đăng ký thất bại');
+      throw error;
     }
   };
 
   const logout = () => {
+    // 1. Xóa Token
     localStorage.removeItem('token');
+    
+    // 2. Xóa dữ liệu Giỏ hàng & Ship để người sau không thấy
+    localStorage.removeItem('cartItems');
+    localStorage.removeItem('shippingInfo');
+
+    // 3. Reset State
     setUser(null);
     toast.info('Đã đăng xuất');
     navigate('/login');
   };
 
-  // Màn hình chờ khi đang check login (Thay vì màn hình trắng)
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-xl font-semibold text-yellow-600 animate-pulse">
-          Đang tải dữ liệu Fluffy...
+          Đang tải dữ liệu...
         </div>
       </div>
     );

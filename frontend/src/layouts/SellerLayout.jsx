@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { FaBoxOpen, FaClipboardList, FaStore, FaChartLine, FaPaw } from 'react-icons/fa';
+import { FaBoxOpen, FaClipboardList, FaStore, FaChartLine, FaPaw, FaComments } from 'react-icons/fa';
 
 const SellerLayout = () => {
   const location = useLocation();
@@ -16,15 +16,21 @@ const SellerLayout = () => {
         label: 'Quản lý Đơn hàng' 
     },
     { 
-        path: '/seller/pets',  // Đổi path
+        path: '/seller/pets',  
         icon: <FaPaw />, 
         label: 'Quản lý Thú cưng' 
     },
     { 
-        path: '/seller/accessories', // Đổi path
+        path: '/seller/accessories', 
         icon: <FaBoxOpen />, 
         label: 'Quản lý Phụ kiện' 
     },
+    // --- THÊM MỤC TIN NHẮN ---
+    {
+        path: '/seller/chat',
+        icon: <FaComments />,
+        label: 'Tin nhắn'
+    }
   ];
 
   return (
@@ -36,24 +42,20 @@ const SellerLayout = () => {
                 <FaStore /> Kênh Người Bán
             </div>
             <nav className="flex flex-col p-2">
-                {menuItems.map((item) => {
-                    const isActive = location.pathname === item.path;
-
-                    return (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium ${
-                                isActive
-                                ? 'bg-yellow-50 text-[var(--color-primary)] font-bold'
-                                : 'text-gray-600 hover:bg-gray-50'
-                            }`}
-                        >
-                            <span className="text-lg">{item.icon}</span>
-                            {item.label}
-                        </Link>
-                    );
-                })}
+                {menuItems.map((item) => (
+                    <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium ${
+                            location.pathname === item.path
+                            ? 'bg-yellow-50 text-[var(--color-primary)] font-bold'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                    >
+                        <span className="text-lg">{item.icon}</span>
+                        {item.label}
+                    </Link>
+                ))}
             </nav>
         </div>
       </div>

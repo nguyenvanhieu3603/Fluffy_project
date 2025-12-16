@@ -8,23 +8,15 @@ const locationSchema = new mongoose.Schema({
 
 // Schema con cho Thông tin sức khỏe
 const healthInfoSchema = new mongoose.Schema({
-  vaccinationCertificate: { type: String }, 
+  vaccinationCertificate: { type: String }, // Ảnh sổ tiêm chủng
   microchipId: { type: String },
-  otherDocuments: [{ type: String }] 
+  otherDocuments: [{ type: String }] // Mảng các ảnh giấy tờ khác
 }, { _id: false });
 
 const petSchema = new mongoose.Schema({
-  // --- QUAN TRỌNG: PHÂN LOẠI SẢN PHẨM ---
-  type: {
-    type: String,
-    enum: ['pet', 'accessory'],
-    required: true,
-    default: 'pet' // Mặc định là pet để tương thích dữ liệu cũ
-  },
-
   name: {
     type: String,
-    required: [true, 'Vui lòng nhập tên sản phẩm'],
+    required: [true, 'Vui lòng nhập tên thú cưng'],
     trim: true
   },
   description: {
@@ -37,7 +29,7 @@ const petSchema = new mongoose.Schema({
     min: 0
   },
   images: [{
-    type: String, 
+    type: String, // Lưu URL ảnh từ Cloudinary
     required: true
   }],
   stock: {
@@ -52,34 +44,46 @@ const petSchema = new mongoose.Schema({
   },
   seller: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'User', // Liên kết với người bán
     required: true
   },
-
-  // --- CÁC TRƯỜNG DÀNH RIÊNG CHO THÚ CƯNG (Không bắt buộc) ---
+  // Các thông tin đặc thù của thú cưng
   age: { type: String },
   gender: { 
     type: String, 
     enum: ['Đực', 'Cái', 'Không xác định'] 
   },
   breed: { type: String },
+  
+  // --- CẬP NHẬT: Thêm trường màu sắc ---
+  color: { type: String }, 
+  // ------------------------------------
+  
   weight: { type: String }, 
   length: { type: String }, 
+  
+  // Phân loại Pet/Accessory
+  type: {
+    type: String,
+    enum: ['pet', 'accessory'],
+    default: 'pet'
+  },
 
   location: locationSchema,
   healthInfo: healthInfoSchema,
   
-  // Quy trình duyệt sức khỏe (Chỉ áp dụng cho type='pet')
+  // Quy trình duyệt sức khỏe
   healthStatus: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'not_required'], // Thêm 'not_required' cho phụ kiện
-    default: 'pending'
+    enum: ['pending', 'approved', 'rejected', 'not_required'],
+    default: 'pending' // Mặc định chờ Admin duyệt giấy tờ
   },
   verifiedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User' // Admin nào đã duyệt
   },
   
+  // Trạng thái hiển thị bán
   status: {
     type: String,
     enum: ['available', 'sold_out', 'hidden'],
@@ -93,10 +97,10 @@ const petSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index nâng cao
-petSchema.index({ type: 1, status: 1 }); // Lọc nhanh theo loại
-petSchema.index({ category: 1 });
+// Index để lọc sản phẩm nhanh hơn
+petSchema.index({ category: 1, status: 1 });
 petSchema.index({ 'location.city': 1 });
+petSchema.index({ color: 1 }); 
 
 const Pet = mongoose.model('Pet', petSchema);
 

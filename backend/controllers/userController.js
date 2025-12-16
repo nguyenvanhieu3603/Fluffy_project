@@ -102,7 +102,7 @@ const getUserProfile = async (req, res) => {
       email: user.email,
       role: user.role,
       phone: user.phone,
-      address: user.address,
+      addresses: user.addresses, // Trả về danh sách địa chỉ
       avatar: user.avatar,
       sellerInfo: user.sellerInfo
     });
@@ -270,16 +270,17 @@ const approveSeller = async (req, res) => {
   }
 };
 
-// @desc    Thêm địa chỉ giao hàng mới
+// @desc    Thêm địa chỉ giao hàng mới (ĐÃ CẬP NHẬT)
 // @route   POST /api/users/address
 // @access  Private
 const addAddress = async (req, res) => {
     try {
-        const { fullName, phone, address, isDefault } = req.body;
+        // Nhận vào thông tin địa chỉ chi tiết
+        const { province, district, ward, specificAddress, isDefault } = req.body;
         const user = await User.findById(req.user._id);
 
         if (user) {
-            const newAddress = { fullName, phone, address, isDefault };
+            const newAddress = { province, district, ward, specificAddress, isDefault };
 
             // Nếu là địa chỉ mặc định, set các cái cũ thành false
             if (isDefault) {
@@ -353,7 +354,7 @@ const updateUserProfile = async (req, res) => {
         email: updatedUser.email,
         role: updatedUser.role,
         phone: updatedUser.phone,
-        address: updatedUser.address,
+        addresses: updatedUser.addresses, // Trả về danh sách địa chỉ
         avatar: updatedUser.avatar,
         sellerInfo: updatedUser.sellerInfo,
         token: token,
